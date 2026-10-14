@@ -20,7 +20,7 @@ By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 
 import math
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 ALPHA = 0.2
 BETA = 0.8

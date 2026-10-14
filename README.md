@@ -20,8 +20,9 @@ name. Apache-2.0 licence. It is shared publicly so every competitor can use it.
 | `gems_external.py` | Downloads the public-domain USGS Quaternary Fault and Fold Database (Qfaults) over the grid, or reads any GeoJSON of fault lines, projects it to UTM 11N without pyproj, and writes three bands on the competition grid: mapped line, distance to it, and *candidate* (mapped lines more than N px from any known fault). It reports how far the external map and the known faults agree, and `merge` ORs the candidates into a submission. |
 | `gems_robust.py` | Checks how a submission holds up when the Final Round labels are revised. `table` gives the exact score of a band of width 1, 3 or 5 px against a straight fault that lies 0 to 3 px away. `stress` moves, removes and adds faults in a truth raster many times and re-scores each submission (or each threshold and dilation of `oof.npy`) against the same perturbed copies. |
 | `gems_shapes.py` | Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` and `gems_regrid.py points` accept. Made for the USGS Nevada geothermal data release below. |
-| `gems_regrid.py` | New in 0.5.0. Puts outside rasters and point layers on the competition grid as extra feature bands. `grid` samples ESRI ASCII grids (`.asc`, also straight from inside a zip as `ZIP::NAME`) or GeoTIFFs in UTM 11N onto the 100 m cells, bilinear or nearest, NaN beyond the source. `points` turns point layers into a distance band and a count band each. `list` shows the ASCII grids in a zip. |
-| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py` | 108 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, and the baseline's handling of a band with a gap. |
+| `gems_regrid.py` | Puts outside rasters and point layers on the competition grid as extra feature bands. `grid` samples ESRI ASCII grids (`.asc`, also straight from inside a zip as `ZIP::NAME`) or GeoTIFFs in UTM 11N onto the 100 m cells, bilinear or nearest, NaN beyond the source. `points` turns point layers into a distance band and a count band each. `list` shows the ASCII grids in a zip. |
+| `gems_agreement.py` | New in 0.6.0. Scores how far public fault maps agree **with each other** using the GEMS metric: the Quaternary faults, fault lines and gravity and magnetic lineations of the USGS Nevada release, and the live USGS Qfaults database, every ordered pair, with a chance baseline and a distance profile from 100 m to 5 km. Needs only numpy (scipy optional), no competition data. See "How far public fault maps agree" below. |
+| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py`, `test_agreement.py` | 123 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, the baseline's handling of a band with a gap, map comparison and distance profiles on hand-worked lines, and end-to-end agreement runs on a small zip. |
 
 ```
 pip install numpy scipy rasterio scikit-learn
@@ -45,13 +46,14 @@ python gems_regrid.py grid   --grid data/numeric_features.tif --src USGScontribu
 python gems_shapes.py geojson --src USGScontributions_forNVML_dataRelease2021.zip --layer gravityIntersections_nvML --out grav_int.geojson
 python gems_regrid.py points --grid data/numeric_features.tif --points grav_int.geojson --out usgs_points.tif
 python gems_baseline.py train    --features data/numeric_features.tif --labels data/labels.tif --extra-features usgs_grids.tif --extra-features usgs_points.tif --out submission.tif
+python gems_agreement.py run --data-dir data --out-dir agreement --download --qfaults
 ```
 
 **Status:** the metric, tip detection, lidar features, projection, band
-table, resampling and checks are unit-tested on synthetic grids. The
-pipeline has **not yet been run on the competition data**, which is
-available only to registered entrants. Results will be added here once it
-has.
+table, resampling, map comparison and checks are unit-tested on synthetic
+grids. The pipeline has **not yet been run on the competition data**, which
+is available only to registered entrants. `gems_shapes.py`, `gems_regrid.py`
+and `gems_agreement.py` have run on the real USGS release (results below).
 
 ## What the metric rewards
 
@@ -111,6 +113,91 @@ lines, and a mixed revision (1 px, 10% removed, 10% added). Every map is
 scored against the same perturbed copies, so the means compare fairly.
 Using `labels.tif` as the truth is only a stand-in for the hidden new faults,
 but it shows which settings are fragile.
+
+## How far public fault maps agree
+
+A GEMS score means little without a yardstick. If two independent,
+published maps of the same ground agree with each other at, say, 0.3 under
+this metric, then a model at 0.3 against the hidden labels is already doing
+about as well as a second mapper. And if lines traced only from gravity and
+magnetic gradients agree with mapped faults far better than chance, buried
+faults (the ones GEMS asks for) should show up in them too.
+
+`gems_agreement.py run` measures this on public data alone:
+
+- It reads the USGS Nevada release below straight from its zip (downloading
+  it with `--download`) and, with `--qfaults`, fetches the national Qfaults
+  lines over the same box.
+- It draws every map on one 100 m grid in UTM zone 11N over the release's
+  bounding box (119.53 W to 114.42 W, 38.45 N to 40.73 N), scored only
+  inside the footprint of the release's `grv_filthg` grid when the zip holds
+  it.
+- For every ordered pair it reports the GEMS score with one map as the
+  prediction and the other as the truth, the share of each map's cells
+  within 300 m of the other's, and a **chance baseline**: the same score
+  with the prediction map shifted 14 to 21 km in five directions (so it
+  keeps its own density and shape but loses its position). "Lift" is the
+  score divided by the chance score.
+- Since the metric only looks 300 m out, a **distance profile** gives the
+  share of the truth map's cells within 100 m, 300 m, 500 m, 1, 2 and 5 km
+  of the prediction map, against the same shifted copies (`--radii`).
+- It writes `agreement.json` (everything, including the layer list and the
+  ASCII grids found in the zip) and `agreement.md` (the tables).
+
+### First results (14 October 2026)
+
+Run on the full release box: 2563 x 4464 cells of 100 m, 10,799,672 of
+them inside the gravity grid's footprint, 299 s on 4 CPU cores. Full
+tables: [`docs/agreement-2026-10.md`](docs/agreement-2026-10.md), raw
+numbers: [`docs/agreement-2026-10.json`](docs/agreement-2026-10.json).
+
+| prediction | truth | GEMS score | chance | lift | truth within 300 m | prediction within 300 m |
+|---|---|---|---|---|---|---|
+| release Quaternary faults | national Qfaults (live, 8,460 features) | **0.796** | 0.045 | 17.6 | 98.1% | 98.6% |
+| national Qfaults | release Quaternary faults | **0.799** | 0.045 | 17.7 | 98.6% | 98.1% |
+| release Quaternary faults | release tdts fault lines | 1.000 | 0.045 | 22.0 | 100% | 100% |
+| gravity lineations | release Quaternary faults | 0.081 | 0.077 | **1.05** | 21.8% | 8.6% |
+| magnetic lineations | release Quaternary faults | 0.068 | 0.062 | **1.09** | 16.2% | 9.3% |
+| gravity + magnetic lineations | release Quaternary faults | 0.105 | 0.099 | **1.06** | 34.3% | 8.9% |
+| release Quaternary faults | gravity lineations | 0.048 | 0.046 | 1.05 | 8.6% | 21.8% |
+| gravity lineations | magnetic lineations | 0.100 | 0.092 | 1.08 | 22.4% | 15.3% |
+
+What this says:
+
+- **The release's two fault layers are one map.** Its Quaternary faults and
+  its slip/dilation-tendency fault lines fall on exactly the same cells
+  (150,394 each), so they count once, not twice.
+- **Two editions of the same database score about 0.80, not 1.** The
+  release's Quaternary faults (2021) and today's national Qfaults service
+  overlap 98% within 300 m each way, yet the GEMS score is 0.80, because
+  traces moved by a cell or two between editions cost partial credit. A
+  model that reaches 0.8 against hand-drawn labels would be as close as a
+  re-issue of the same map.
+- **Potential-field lineations do not coincide with mapped Quaternary faults
+  beyond chance at the metric's 300 m scale.** Lineations traced along
+  gravity and magnetic gradient crests score 0.07 to 0.11 against the
+  faults, only 5 to 9% above the same lineations shifted 14 to 21 km away.
+  About a fifth of fault cells lie within 300 m of a gravity lineation, but
+  so would many of them if the lineations were placed at random. A likely
+  reason: a dipping range-front fault's gravity gradient crest sits over the
+  buried contact, often hundreds of metres to kilometres basinward of the
+  surface trace. Either way, **drawing the lineations as predicted faults
+  would score close to chance**; they belong in a model as distance or
+  density features, where it can learn the offset. The distance profile
+  (added in this release; its numbers come with the next run) tests at what
+  scale, if any, the two are related.
+
+Limits: this compares maps with each other, not with the GEMS labels, which
+the organisers keep hidden; it covers the USGS release's box, which overlaps
+only part of the GeoDAWN area; lines are rasterised one cell wide; maps from
+one release may share sources, so their agreement is an upper bound on
+independent agreement; and the Quaternary faults are only the young, mapped
+part of the fault network, so "no coincidence with Quaternary faults" says
+nothing about older or buried faults the lineations may follow. The
+organisers mask the known USGS/INGENIOUS faults when scoring, so what
+matters for an entry is the part of a public map that lies **away** from the
+known faults; `gems_external.py rasterize --labels` measures that once the
+competition data is at hand.
 
 ## What the organisers have said on the forum
 
@@ -224,8 +311,9 @@ The 256 MB zip holds shapefiles that `gems_shapes.py` reads directly:
   documentation folder gives the method; its horizontal-gradient grids are
   included). Gradient crests mark where rocks of different density or
   magnetisation meet, often across a fault, and many such faults are buried
-  under basin fill. These are the most direct candidates for GEMS' "hidden"
-  faults.
+  under basin fill. The agreement run above shows they rarely fall within
+  300 m of mapped Quaternary faults, so use them as features rather than as
+  drawn faults.
 - `gravityEndpoints_nvML`, `gravityIntersections_nvML`,
   `magneticEndpoints_nvML`, `magneticIntersections_nvML`,
   `gravityMaxSpots_all_nvML`, `magneticMaxSpots_all_nvML`, `heatFlowWells_nvML`:
@@ -234,7 +322,8 @@ The 256 MB zip holds shapefiles that `gems_shapes.py` reads directly:
   number of points in the square of half-width `--radius` (default 20 px)
   around each cell. Points just outside the grid still count.
 - `quaternaryFaults_nvML` and `tdts2020nvML_faultLines`: mapped faults, the
-  latter with slip and dilation tendency for each segment.
+  latter with slip and dilation tendency for each segment (the two layers
+  cover exactly the same cells).
 
 and ESRI ASCII grids that `gems_regrid.py grid` reads straight from the zip
 (`ZIP::grv_filthg`), with the `.prj` beside each one checked for UTM 11N:
@@ -246,23 +335,26 @@ and ESRI ASCII grids that `gems_regrid.py grid` reads straight from the zip
   uncertainty;
 - `tdts_nvml`: slip and dilation tendency.
 
-`python gems_regrid.py list --src <zip>` prints each grid's size and cell
-size. Sampling is bilinear between source cell centres; nodata neighbours
-are left out and the rest re-weighted, so values reach half a cell into a
-gap. Cells beyond a source are NaN, and the baseline then treats that band
-(and its filters within 6 px) as missing there rather than as a step.
+All are 1728 x 1000 cells of 250 m (as listed by `gems_regrid.py list` on
+the real zip). Their `.prj` files are not recognised as UTM 11N by
+`gems_shapes.prj_kind`, so pass `--assume-utm11`, which the release
+metadata supports. Sampling is bilinear between source cell centres; nodata
+neighbours are left out and the rest re-weighted, so values reach half a
+cell into a gap. Cells beyond a source are NaN, and the baseline then treats
+that band (and its filters within 6 px) as missing there rather than as a
+step.
 
 Use the lineations like Qfaults: `rasterize` with `--labels` reports how far
 they agree with the known faults, and its candidate band marks the
 lineation cells away from them. Lineations are about 225 m wide buffers
 reduced to centre lines, so their positions are uncertain by a pixel or
-two; by the width table above, a 3 px band is the safer way to submit them.
-The grids and point bands go into training with `--extra-features`. **Do not
-feed in points or grids derived from the known faults** (for example the
-vertices of `quaternaryFaults_nvML` or `tdts2020nvML_faultVertices` if they
-coincide with the labels): that is the same leakage as a distance-to-label
-feature. Check with `gems_external.py rasterize --labels` first. Whether any
-of this pays is a question for the public leaderboard.
+two. The grids and point bands go into training with `--extra-features`.
+**Do not feed in points or grids derived from the known faults** (for
+example the vertices of `quaternaryFaults_nvML` or
+`tdts2020nvML_faultVertices` if they coincide with the labels): that is the
+same leakage as a distance-to-label feature. Check with
+`gems_external.py rasterize --labels` first. Whether any of this pays is a
+question for the public leaderboard.
 
 ## Ideas
 
@@ -280,6 +372,7 @@ of this pays is a question for the public leaderboard.
 
 ## Disclosure
 
-MV2 of Munim, Inc. plans to enter the GEMS Prize if Munim, Inc. qualifies
-under the official rules. Any entry from Munim, Inc. will say that the work
-was made with AI agents. This is not an official DrivenData, DOE or NLR tool.
+MV2 of Munim, Inc. plans to enter the GEMS Prize as Munim, Inc., a US
+company, under the official rules. Any entry from Munim, Inc. will say that
+the work was made with AI agents. This is not an official DrivenData, DOE or
+NLR tool. The results in `docs/` are CC BY 4.0.

@@ -1,0 +1,793 @@
+{
+ "version": "0.6.0",
+ "release": "https://doi.org/10.5066/P9V5SQRD",
+ "bbox_lonlat": [
+  -119.5306,
+  38.448,
+  -114.417,
+  40.7282
+ ],
+ "download": "downloaded",
+ "shapefile_layers": [
+  [
+   "gravityEndpoints_nvML",
+   "point",
+   6137,
+   "utm11"
+  ],
+  [
+   "gravityIntersections_nvML",
+   "point",
+   5075,
+   "utm11"
+  ],
+  [
+   "gravityLineations_nvML",
+   "polyline",
+   450994,
+   "utm11"
+  ],
+  [
+   "gravityMaxSpots_all_nvML",
+   "point",
+   372886,
+   "utm11"
+  ],
+  [
+   "gravitySaddles_nvML",
+   "point",
+   8685,
+   "utm11"
+  ],
+  [
+   "gravityStations_nvML",
+   "point",
+   31374,
+   "utm11"
+  ],
+  [
+   "heatFlowWells_nvML",
+   "point",
+   2861,
+   "utm11"
+  ],
+  [
+   "magneticEndpoints_nvML",
+   "point",
+   4801,
+   "utm11"
+  ],
+  [
+   "magneticIntersections_nvML",
+   "point",
+   1188,
+   "utm11"
+  ],
+  [
+   "magneticLineations_nvML",
+   "polyline",
+   201817,
+   "utm11"
+  ],
+  [
+   "magneticMaxSpots_all_nvML",
+   "point",
+   139318,
+   "utm11"
+  ],
+  [
+   "quaternaryFaults_nvML",
+   "polylineZ",
+   52706,
+   "utm11"
+  ],
+  [
+   "tdts2020nvML_faultLines",
+   "polylineZ",
+   52706,
+   "utm11"
+  ],
+  [
+   "tdts2020nvML_faultVertices",
+   "pointZ",
+   105412,
+   "utm11"
+  ]
+ ],
+ "ascii_grids": [
+  [
+   "dilationSlip/asciiGrids/tdts_nvml.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/grv.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/grv_con.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/grv_dmx.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/grv_filt.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/grv_filthg.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/psg.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/psg_con.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/psg_dmx.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/psg_filt.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "geophysics/asciiGrids/psg_filthg.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "heatFlow/asciiGrids/hfnvml_est.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ],
+  [
+   "heatFlow/asciiGrids/hfnvml_unc.asc",
+   1728,
+   1000,
+   250.0,
+   "unknown"
+  ]
+ ],
+ "grid": {
+  "crs": "EPSG:26911 / 32611 (UTM 11N)",
+  "cell_m": 100.0,
+  "origin": [
+   279100.0,
+   4511800.0
+  ],
+  "shape": [
+   2563,
+   4464
+  ],
+  "scored_cells": 10799672,
+  "footprint": "grv_filthg: 1000 x 1728 cells of 250 m"
+ },
+ "maps": {
+  "quaternary_faults": {
+   "layer": "quaternaryFaults_nvML",
+   "lines": 52706,
+   "projection": "UTM 11N (.prj)",
+   "cells_in_mask": 150394
+  },
+  "tdts_fault_lines": {
+   "layer": "tdts2020nvML_faultLines",
+   "lines": 52706,
+   "projection": "UTM 11N (.prj)",
+   "cells_in_mask": 150394
+  },
+  "gravity_lineations": {
+   "layer": "gravityLineations_nvML",
+   "lines": 450994,
+   "projection": "UTM 11N (.prj)",
+   "cells_in_mask": 401684
+  },
+  "magnetic_lineations": {
+   "layer": "magneticLineations_nvML",
+   "lines": 201817,
+   "projection": "UTM 11N (.prj)",
+   "cells_in_mask": 264549
+  },
+  "potential_field": {
+   "union_of": [
+    "gravity_lineations",
+    "magnetic_lineations"
+   ],
+   "cells_in_mask": 655942
+  },
+  "qfaults_national": {
+   "service": "https://earthquake.usgs.gov/arcgis/rest/services/haz/Qfaults/MapServer/21/query",
+   "features": 8460,
+   "lines": 8460,
+   "cells_in_mask": 151157
+  }
+ },
+ "missing": {},
+ "pairs": [
+  {
+   "pred": "quaternary_faults",
+   "truth": "tdts_fault_lines",
+   "score": 1.0,
+   "tp": 150394.0,
+   "fp": 0.0,
+   "fn": 0.0,
+   "truth_cells": 150394,
+   "pred_cells": 150394,
+   "truth_near_pred": 1.0,
+   "pred_near_truth": 1.0,
+   "chance_score": 0.0454,
+   "chance_scores": [
+    0.044,
+    0.0404,
+    0.0503,
+    0.0499,
+    0.0425
+   ],
+   "lift": 22.02
+  },
+  {
+   "pred": "quaternary_faults",
+   "truth": "gravity_lineations",
+   "score": 0.0482,
+   "tp": 16962.9,
+   "fp": 134176.2,
+   "fn": 384721.1,
+   "truth_cells": 401684,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0861,
+   "pred_near_truth": 0.2177,
+   "chance_score": 0.0461,
+   "chance_scores": [
+    0.0472,
+    0.0436,
+    0.0459,
+    0.0478,
+    0.0458
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "quaternary_faults",
+   "truth": "magnetic_lineations",
+   "score": 0.0494,
+   "tp": 11955.3,
+   "fp": 138690.1,
+   "fn": 252593.7,
+   "truth_cells": 264549,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0932,
+   "pred_near_truth": 0.1615,
+   "chance_score": 0.0454,
+   "chance_scores": [
+    0.0471,
+    0.0436,
+    0.045,
+    0.047,
+    0.0442
+   ],
+   "lift": 1.09
+  },
+  {
+   "pred": "quaternary_faults",
+   "truth": "potential_field",
+   "score": 0.0513,
+   "tp": 28464.8,
+   "fp": 124118.6,
+   "fn": 627477.2,
+   "truth_cells": 655942,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0889,
+   "pred_near_truth": 0.3426,
+   "chance_score": 0.0481,
+   "chance_scores": [
+    0.0496,
+    0.0457,
+    0.0478,
+    0.0499,
+    0.0474
+   ],
+   "lift": 1.07
+  },
+  {
+   "pred": "quaternary_faults",
+   "truth": "qfaults_national",
+   "score": 0.7959,
+   "tp": 120182.4,
+   "fp": 30163.0,
+   "fn": 30974.6,
+   "truth_cells": 151157,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.9812,
+   "pred_near_truth": 0.9858,
+   "chance_score": 0.0452,
+   "chance_scores": [
+    0.0432,
+    0.0407,
+    0.0495,
+    0.0498,
+    0.0428
+   ],
+   "lift": 17.61
+  },
+  {
+   "pred": "tdts_fault_lines",
+   "truth": "quaternary_faults",
+   "score": 1.0,
+   "tp": 150394.0,
+   "fp": 0.0,
+   "fn": 0.0,
+   "truth_cells": 150394,
+   "pred_cells": 150394,
+   "truth_near_pred": 1.0,
+   "pred_near_truth": 1.0,
+   "chance_score": 0.0454,
+   "chance_scores": [
+    0.044,
+    0.0404,
+    0.0503,
+    0.0499,
+    0.0425
+   ],
+   "lift": 22.02
+  },
+  {
+   "pred": "tdts_fault_lines",
+   "truth": "gravity_lineations",
+   "score": 0.0482,
+   "tp": 16962.9,
+   "fp": 134176.2,
+   "fn": 384721.1,
+   "truth_cells": 401684,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0861,
+   "pred_near_truth": 0.2177,
+   "chance_score": 0.0461,
+   "chance_scores": [
+    0.0472,
+    0.0436,
+    0.0459,
+    0.0478,
+    0.0458
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "tdts_fault_lines",
+   "truth": "magnetic_lineations",
+   "score": 0.0494,
+   "tp": 11955.3,
+   "fp": 138690.1,
+   "fn": 252593.7,
+   "truth_cells": 264549,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0932,
+   "pred_near_truth": 0.1615,
+   "chance_score": 0.0454,
+   "chance_scores": [
+    0.0471,
+    0.0436,
+    0.045,
+    0.047,
+    0.0442
+   ],
+   "lift": 1.09
+  },
+  {
+   "pred": "tdts_fault_lines",
+   "truth": "potential_field",
+   "score": 0.0513,
+   "tp": 28464.8,
+   "fp": 124118.6,
+   "fn": 627477.2,
+   "truth_cells": 655942,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.0889,
+   "pred_near_truth": 0.3426,
+   "chance_score": 0.0481,
+   "chance_scores": [
+    0.0496,
+    0.0457,
+    0.0478,
+    0.0499,
+    0.0474
+   ],
+   "lift": 1.07
+  },
+  {
+   "pred": "tdts_fault_lines",
+   "truth": "qfaults_national",
+   "score": 0.7959,
+   "tp": 120182.4,
+   "fp": 30163.0,
+   "fn": 30974.6,
+   "truth_cells": 151157,
+   "pred_cells": 150394,
+   "truth_near_pred": 0.9812,
+   "pred_near_truth": 0.9858,
+   "chance_score": 0.0452,
+   "chance_scores": [
+    0.0432,
+    0.0407,
+    0.0495,
+    0.0498,
+    0.0428
+   ],
+   "lift": 17.61
+  },
+  {
+   "pred": "gravity_lineations",
+   "truth": "quaternary_faults",
+   "score": 0.0809,
+   "tp": 16217.8,
+   "fp": 384721.1,
+   "fn": 134176.2,
+   "truth_cells": 150394,
+   "pred_cells": 401684,
+   "truth_near_pred": 0.2177,
+   "pred_near_truth": 0.0861,
+   "chance_score": 0.077,
+   "chance_scores": [
+    0.0762,
+    0.0765,
+    0.0809,
+    0.076,
+    0.0755
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "gravity_lineations",
+   "truth": "tdts_fault_lines",
+   "score": 0.0809,
+   "tp": 16217.8,
+   "fp": 384721.1,
+   "fn": 134176.2,
+   "truth_cells": 150394,
+   "pred_cells": 401684,
+   "truth_near_pred": 0.2177,
+   "pred_near_truth": 0.0861,
+   "chance_score": 0.077,
+   "chance_scores": [
+    0.0762,
+    0.0765,
+    0.0809,
+    0.076,
+    0.0755
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "gravity_lineations",
+   "truth": "magnetic_lineations",
+   "score": 0.0997,
+   "tp": 29087.1,
+   "fp": 372093.8,
+   "fn": 235461.9,
+   "truth_cells": 264549,
+   "pred_cells": 401684,
+   "truth_near_pred": 0.224,
+   "pred_near_truth": 0.1527,
+   "chance_score": 0.0919,
+   "chance_scores": [
+    0.0903,
+    0.0919,
+    0.0925,
+    0.0946,
+    0.0904
+   ],
+   "lift": 1.08
+  },
+  {
+   "pred": "gravity_lineations",
+   "truth": "qfaults_national",
+   "score": 0.0811,
+   "tp": 16303.0,
+   "fp": 384666.3,
+   "fn": 134854.0,
+   "truth_cells": 151157,
+   "pred_cells": 401684,
+   "truth_near_pred": 0.2181,
+   "pred_near_truth": 0.0866,
+   "chance_score": 0.0769,
+   "chance_scores": [
+    0.0762,
+    0.0761,
+    0.0806,
+    0.0767,
+    0.0748
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "magnetic_lineations",
+   "truth": "quaternary_faults",
+   "score": 0.0676,
+   "tp": 11703.9,
+   "fp": 252593.7,
+   "fn": 138690.1,
+   "truth_cells": 150394,
+   "pred_cells": 264549,
+   "truth_near_pred": 0.1615,
+   "pred_near_truth": 0.0932,
+   "chance_score": 0.0621,
+   "chance_scores": [
+    0.0605,
+    0.0623,
+    0.0632,
+    0.0609,
+    0.0634
+   ],
+   "lift": 1.09
+  },
+  {
+   "pred": "magnetic_lineations",
+   "truth": "tdts_fault_lines",
+   "score": 0.0676,
+   "tp": 11703.9,
+   "fp": 252593.7,
+   "fn": 138690.1,
+   "truth_cells": 150394,
+   "pred_cells": 264549,
+   "truth_near_pred": 0.1615,
+   "pred_near_truth": 0.0932,
+   "chance_score": 0.0621,
+   "chance_scores": [
+    0.0605,
+    0.0623,
+    0.0632,
+    0.0609,
+    0.0634
+   ],
+   "lift": 1.09
+  },
+  {
+   "pred": "magnetic_lineations",
+   "truth": "gravity_lineations",
+   "score": 0.079,
+   "tp": 29590.2,
+   "fp": 235461.9,
+   "fn": 372093.8,
+   "truth_cells": 401684,
+   "pred_cells": 264549,
+   "truth_near_pred": 0.1527,
+   "pred_near_truth": 0.224,
+   "chance_score": 0.073,
+   "chance_scores": [
+    0.0756,
+    0.0713,
+    0.0726,
+    0.0747,
+    0.071
+   ],
+   "lift": 1.08
+  },
+  {
+   "pred": "magnetic_lineations",
+   "truth": "qfaults_national",
+   "score": 0.0679,
+   "tp": 11794.7,
+   "fp": 252437.6,
+   "fn": 139362.3,
+   "truth_cells": 151157,
+   "pred_cells": 264549,
+   "truth_near_pred": 0.1623,
+   "pred_near_truth": 0.0943,
+   "chance_score": 0.0619,
+   "chance_scores": [
+    0.0605,
+    0.0629,
+    0.0621,
+    0.0605,
+    0.0633
+   ],
+   "lift": 1.1
+  },
+  {
+   "pred": "potential_field",
+   "truth": "quaternary_faults",
+   "score": 0.1047,
+   "tp": 26275.4,
+   "fp": 627477.2,
+   "fn": 124118.6,
+   "truth_cells": 150394,
+   "pred_cells": 655942,
+   "truth_near_pred": 0.3426,
+   "pred_near_truth": 0.0889,
+   "chance_score": 0.0988,
+   "chance_scores": [
+    0.0973,
+    0.0988,
+    0.1025,
+    0.0967,
+    0.0985
+   ],
+   "lift": 1.06
+  },
+  {
+   "pred": "potential_field",
+   "truth": "tdts_fault_lines",
+   "score": 0.1047,
+   "tp": 26275.4,
+   "fp": 627477.2,
+   "fn": 124118.6,
+   "truth_cells": 150394,
+   "pred_cells": 655942,
+   "truth_near_pred": 0.3426,
+   "pred_near_truth": 0.0889,
+   "chance_score": 0.0988,
+   "chance_scores": [
+    0.0973,
+    0.0988,
+    0.1025,
+    0.0967,
+    0.0985
+   ],
+   "lift": 1.06
+  },
+  {
+   "pred": "potential_field",
+   "truth": "qfaults_national",
+   "score": 0.1051,
+   "tp": 26444.5,
+   "fp": 627282.9,
+   "fn": 124712.5,
+   "truth_cells": 151157,
+   "pred_cells": 655942,
+   "truth_near_pred": 0.3438,
+   "pred_near_truth": 0.0896,
+   "chance_score": 0.0987,
+   "chance_scores": [
+    0.0974,
+    0.0991,
+    0.1018,
+    0.0971,
+    0.0979
+   ],
+   "lift": 1.07
+  },
+  {
+   "pred": "qfaults_national",
+   "truth": "quaternary_faults",
+   "score": 0.7986,
+   "tp": 120231.0,
+   "fp": 30974.6,
+   "fn": 30163.0,
+   "truth_cells": 150394,
+   "pred_cells": 151157,
+   "truth_near_pred": 0.9858,
+   "pred_near_truth": 0.9812,
+   "chance_score": 0.0451,
+   "chance_scores": [
+    0.0435,
+    0.0403,
+    0.0497,
+    0.0496,
+    0.0422
+   ],
+   "lift": 17.72
+  },
+  {
+   "pred": "qfaults_national",
+   "truth": "tdts_fault_lines",
+   "score": 0.7986,
+   "tp": 120231.0,
+   "fp": 30974.6,
+   "fn": 30163.0,
+   "truth_cells": 150394,
+   "pred_cells": 151157,
+   "truth_near_pred": 0.9858,
+   "pred_near_truth": 0.9812,
+   "chance_score": 0.0451,
+   "chance_scores": [
+    0.0435,
+    0.0403,
+    0.0497,
+    0.0496,
+    0.0422
+   ],
+   "lift": 17.72
+  },
+  {
+   "pred": "qfaults_national",
+   "truth": "gravity_lineations",
+   "score": 0.0484,
+   "tp": 17017.7,
+   "fp": 134854.0,
+   "fn": 384666.3,
+   "truth_cells": 401684,
+   "pred_cells": 151157,
+   "truth_near_pred": 0.0866,
+   "pred_near_truth": 0.2181,
+   "chance_score": 0.0463,
+   "chance_scores": [
+    0.0473,
+    0.0441,
+    0.0463,
+    0.0478,
+    0.0458
+   ],
+   "lift": 1.05
+  },
+  {
+   "pred": "qfaults_national",
+   "truth": "magnetic_lineations",
+   "score": 0.0501,
+   "tp": 12111.4,
+   "fp": 139362.3,
+   "fn": 252437.6,
+   "truth_cells": 264549,
+   "pred_cells": 151157,
+   "truth_near_pred": 0.0943,
+   "pred_near_truth": 0.1623,
+   "chance_score": 0.0457,
+   "chance_scores": [
+    0.0471,
+    0.0442,
+    0.0458,
+    0.047,
+    0.0445
+   ],
+   "lift": 1.1
+  },
+  {
+   "pred": "qfaults_national",
+   "truth": "potential_field",
+   "score": 0.0516,
+   "tp": 28659.1,
+   "fp": 124712.5,
+   "fn": 627282.9,
+   "truth_cells": 655942,
+   "pred_cells": 151157,
+   "truth_near_pred": 0.0896,
+   "pred_near_truth": 0.3438,
+   "chance_score": 0.0483,
+   "chance_scores": [
+    0.0496,
+    0.0463,
+    0.0484,
+    0.0499,
+    0.0475
+   ],
+   "lift": 1.07
+  }
+ ],
+ "seconds": 298.8
+}
