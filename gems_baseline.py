@@ -15,7 +15,8 @@ Method (a pixel classifier, kept simple so it runs on a CPU):
      fault pixels plus a random sample of the rest.
   3. Spatial block cross-validation (128 x 128 px blocks, 5 folds) gives
      out-of-fold probabilities; the threshold (and an optional 1 px dilation)
-     is picked by the competition metric on those, not by guesswork.
+     is picked by the competition metric on those, not by guesswork. They
+     are saved as <workdir>/oof.npy for `gems_robust.py stress`.
   4. A model on all samples maps the region; the binary map is written as a
      float32 GeoTIFF on the feature grid, NaN outside the data.
 
@@ -307,6 +308,8 @@ def cmd_train(args):
         oof[held] = predict_map(model, stack, held)[held]
         print("fold %d done" % k, file=sys.stderr)
 
+    oof_path = os.path.join(args.workdir, "oof.npy")
+    np.save(oof_path, oof)
     best, table = choose_postprocess(oof, labels, valid)
     model = fit_model(x_all, y_all, args.max_iter, args.seed)
     prob = predict_map(model, stack, valid)
@@ -319,7 +322,8 @@ def cmd_train(args):
     np.save(os.path.join(args.workdir, "probability.npy"), prob)
     summary = {"version": __version__, "bands": names, "features": f,
                "samples": int(idx.size), "positives": int(y_all.sum()),
-               "chosen": best, "oof_table": table, "out": args.out,
+               "chosen": best, "oof_table": table, "oof": oof_path,
+               "out": args.out,
                "threshold_rule_at_chosen_score":
                    gems_metric.threshold_rule(best["score"])}
     print(json.dumps(summary, indent=2))

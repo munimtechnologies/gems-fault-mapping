@@ -14,11 +14,13 @@ name. MIT licence. It is shared publicly so every competitor can use it.
 | File | What it does |
 |---|---|
 | `gems_metric.py` | A local copy of the competition metric, the distance-weighted Tversky index (DTI), built from the public problem description. It has a plain-Python reference version and a fast numpy version, plus a threshold rule derived from the metric. |
-| `gems_baseline.py` | A CPU pipeline: edge and ridge features for every band, a gradient-boosted pixel classifier, spatial block cross-validation, a threshold chosen by the metric, a GeoTIFF writer, and a submission checker. `--extra-features` adds any other raster on the same grid (such as the lidar features below). |
+| `gems_baseline.py` | A CPU pipeline: edge and ridge features for every band, a gradient-boosted pixel classifier, spatial block cross-validation, a threshold chosen by the metric, a GeoTIFF writer, and a submission checker. `--extra-features` adds any other raster on the same grid (such as the lidar features below). Out-of-fold probabilities are saved as `work/oof.npy`. |
 | `gems_extend.py` | Finds the tips of the known faults and rasterises a short extension beyond each one along the fault's direction (pure numpy). `gems_baseline.py extend` ORs these into an existing submission without retraining. |
 | `gems_lidar.py` | Reads the 1 m lidar DEM tiles listed in `1m_DEM_links.csv` and summarises fault-scarp evidence for every 100 m cell: slope mean and 95th percentile, share of steep pixels, relief, and how much the slopes face one way (structure-tensor coherence). Resumable, so a long run over all tiles can be stopped and restarted. |
-| `gems_external.py` | New in 0.3.0. Downloads the public-domain USGS Quaternary Fault and Fold Database (Qfaults) over the grid, or reads any GeoJSON of fault lines, projects it to UTM 11N without pyproj, and writes three bands on the competition grid: mapped line, distance to it, and *candidate* (mapped lines more than N px from any known fault). It reports how far the external map and the known faults agree, and `merge` ORs the candidates into a submission. |
-| `test_gems.py`, `test_external.py` | 61 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, and the submission checks. |
+| `gems_external.py` | Downloads the public-domain USGS Quaternary Fault and Fold Database (Qfaults) over the grid, or reads any GeoJSON of fault lines, projects it to UTM 11N without pyproj, and writes three bands on the competition grid: mapped line, distance to it, and *candidate* (mapped lines more than N px from any known fault). It reports how far the external map and the known faults agree, and `merge` ORs the candidates into a submission. |
+| `gems_robust.py` | New in 0.4.0. Checks how a submission holds up when the Final Round labels are revised. `table` gives the exact score of a band of width 1, 3 or 5 px against a straight fault that lies 0 to 3 px away. `stress` moves, removes and adds faults in a truth raster many times and re-scores each submission (or each threshold and dilation of `oof.npy`) against the same perturbed copies. |
+| `gems_shapes.py` | New in 0.4.0. Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` accepts. Made for the USGS Nevada geothermal data release below, whose gravity and magnetic lineations trace possible buried faults. |
+| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py` | 90 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, and shapefiles and dBASE tables built byte by byte from their published layouts. |
 
 ```
 pip install numpy scipy rasterio scikit-learn
@@ -32,12 +34,17 @@ python gems_extend.py --labels data/labels.tif --out extensions.tif --length 3
 python gems_external.py fetch     --grid data/numeric_features.tif --out qfaults.geojson
 python gems_external.py rasterize --grid data/numeric_features.tif --lines qfaults.geojson --labels data/labels.tif --out external.tif
 python gems_external.py merge     --pred submission.tif --external external.tif --out submission_qf.tif
+python gems_robust.py table
+python gems_robust.py stress --labels data/labels.tif --prob work/oof.npy --threshold 0.05 --threshold 0.1 --dilate 0 --dilate 1
+python gems_shapes.py list    --src USGScontributions_forNVML_dataRelease2021.zip
+python gems_shapes.py geojson --src USGScontributions_forNVML_dataRelease2021.zip --layer magneticLineations_nvML --out mag.geojson
+python gems_external.py rasterize --grid data/numeric_features.tif --lines mag.geojson --labels data/labels.tif --out mag_external.tif
 ```
 
-**Status:** the metric, tip detection, lidar features, projection and checks
-are unit-tested on synthetic grids. The pipeline has **not yet been run on the
-competition data**, which is available only to registered entrants. Results
-will be added here once it has.
+**Status:** the metric, tip detection, lidar features, projection, band
+table and checks are unit-tested on synthetic grids. The pipeline has **not
+yet been run on the competition data**, which is available only to
+registered entrants. Results will be added here once it has.
 
 ## What the metric rewards
 
@@ -58,6 +65,45 @@ The page defines k(d) = max(1 - d/300 m, 0), alpha = 0.2 and beta = 0.8:
   gain and the expected cost are linear in p, so the best value sits at 0 or 1
   (overlapping neighbours can bend this a little). The baseline picks the
   cut-off on out-of-fold predictions using the metric itself.
+
+## When the labels move: line width (Final Round)
+
+The Final Round re-scores the whole area against labels that experts revise
+after seeing every Phase 1 submission. A fault's true trace may then sit a
+pixel or two from where any map put it. `python gems_robust.py table` gives
+the exact score per unit length of a straight fault when the submission
+marks a band 1, 3 or 5 px wide and the true trace lies s px from its centre.
+The right-hand columns pool the counts when s is equally likely to be any
+whole pixel from -1 to 1, or from -2 to 2:
+
+| band width | s = 0 | s = 1 | s = 2 | s = 3 | exact | within 1 px | within 2 px |
+|---|---|---|---|---|---|---|---|
+| 1 px | **1.000** | 0.667 | 0.333 | 0.000 | **1.000** | 0.778 | 0.600 |
+| 3 px | 0.882 | **0.833** | 0.500 | 0.238 | 0.882 | **0.849** | **0.699** |
+| 5 px | 0.714 | 0.682 | **0.625** | **0.385** | 0.714 | 0.692 | 0.664 |
+
+- With exact positions, the thinnest line wins. As soon as the trace is
+  uncertain by a pixel, a **3 px band wins** (0.849 against 0.778), and it is
+  still best at two pixels. A 5 px band only wins when the trace is
+  certainly 2 px or more away; in both averaged columns its outer rows cost
+  more than they recover.
+- Break-even: if a share p of the true fault length lies 1 px off the
+  predicted trace and the rest lies on it, a 1 px line scores 1 - p/3 and a
+  3 px band 15 / (17 + p). They are equal at p^2 + 14p - 6 = 0, so
+  **p = 41.6%**. Above that, widen the line.
+- These numbers are for straight faults along the grid axes. Diagonal and
+  curved faults, ends and junctions differ a little. For real geometry use
+  `stress`, which applies the same kind of revision to a whole raster.
+
+`gems_baseline.py train` already tries dilation 0 and 1 on its out-of-fold
+probabilities, but scores them against the labels exactly as drawn. `stress`
+asks whether that choice survives revision. By default it runs six
+scenarios over 20 random draws each: as labelled, every fault moved up to
+1 px, up to 2 px, 20% of faults removed, 20% more faults added as 20 px
+lines, and a mixed revision (1 px, 10% removed, 10% added). Every map is
+scored against the same perturbed copies, so the means compare fairly.
+Using `labels.tif` as the truth is only a stand-in for the hidden new faults,
+but it shows which settings are fragile.
 
 ## What the organisers have said on the forum
 
@@ -139,11 +185,54 @@ his worked example to 6 cm and by round trips across the zone), marks every
   Quaternary faults that are not in the masked set, so if the new faults
   include them they are hits; if not, each one is a false alarm at a fifth
   of a miss. `merge` ORs them into a submission so one leaderboard slot can
-  answer the question.
+  answer the question. Many Qfaults traces were compiled from maps at
+  1:100,000 to 1:250,000 (see the `mapped_scale` field), where the drawn
+  line alone is about 100 m wide, so their positions are uncertain by about
+  a pixel: by the table above, a candidate band 3 px wide may be the safer
+  choice for them.
 
 Any other GeoJSON of fault lines (for example faults from the USGS State
 Geologic Map Compilation, also public domain, exported from a GIS) can be
 passed with `--lines`, repeatedly.
+
+## Gravity and magnetic lineations (USGS Nevada geothermal data release)
+
+DeAngelo, J., Glen, J.M., Siler, D.L., Coolbaugh, M.F., Earney, T.E.,
+Dean, B.J., Zielinski, L.A. and Ritzinger, B.T., 2021, *USGS Contributions
+to the Nevada Geothermal Machine Learning Project (DE-FOA-0001956):
+Geophysics, Heat Flow, Slip and Dilation Tendency*, U.S. Geological Survey
+data release, https://doi.org/10.5066/P9V5SQRD. Its metadata lists no
+access or use constraints, and the copy on the Geothermal Data Repository
+(submission 1349) is marked CC BY 4.0, so it meets the outside-data
+condition. It covers about 119.5 W to 114.4 W and 38.4 N to 40.7 N, so it
+should overlap the eastern part of the GeoDAWN area (the `rasterize` report
+shows how many cells it reaches). Coordinates are NAD83 transverse
+Mercator with UTM zone 11N parameters, the competition grid's own system.
+
+The 256 MB zip holds shapefiles that `gems_shapes.py` reads directly:
+
+- `gravityLineations_nvML`, `magneticLineations_nvML`: lines built from the
+  "max spots" of the gravity and pseudo-gravity fields (the release's
+  documentation folder gives the method; its horizontal-gradient grids are
+  included). Gradient crests mark where rocks of different density or
+  magnetisation meet, often across a fault, and many such faults are buried
+  under basin fill. These are the most direct candidates for GEMS' "hidden"
+  faults.
+- `gravityEndpoints_nvML`, `gravityIntersections_nvML`,
+  `magneticEndpoints_nvML`, `magneticIntersections_nvML`: where lineations
+  end or cross. These are points,
+  which `rasterize` skips; they are kept in the GeoJSON for other uses.
+- `quaternaryFaults_nvML` and `tdts2020nvML_faultLines`: mapped faults, the
+  latter with slip and dilation tendency for each segment.
+- ESRI and ASCII grids (gradients, heat flow, tendency); those are not read
+  here.
+
+Use them like Qfaults: `rasterize` with `--labels` reports how far the
+lineations agree with the known faults, and its candidate band marks the
+lineation cells away from them. Lineations are about 225 m wide buffers
+reduced to centre lines, so their positions are uncertain by a pixel or
+two; by the width table above, a 3 px band is the safer way to submit them.
+Whether any of this pays is a question for the public leaderboard.
 
 ## Ideas
 
