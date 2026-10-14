@@ -7,10 +7,15 @@
 
 Method (a pixel classifier, kept simple so it runs on a CPU):
   1. Each of the 19 feature bands (plus any --extra-features rasters on the
-     same grid, such as gems_lidar.py output) is standardised and expanded
-     with edge and ridge filters (Gaussian gradient magnitude at 1 and 3 px,
-     the two Hessian eigenvalues at 2 px), which respond to the linear
-     breaks faults leave in magnetics, gravity and topography.
+     same grid, such as gems_lidar.py or gems_regrid.py output) is
+     standardised and expanded with edge and ridge filters (Gaussian
+     gradient magnitude at 1 and 3 px, the two Hessian eigenvalues at 2 px),
+     which respond to the linear breaks faults leave in magnetics, gravity
+     and topography. Where a band has no data inside the area (an outside
+     grid that covers only part of it), the band is left missing there and
+     its filters within EDGE_PX px of the gap too, so the edge of its
+     coverage is not mistaken for a break; the classifier handles missing
+     values natively.
   2. A HistGradientBoostingClassifier learns fault vs. not-fault from all
      fault pixels plus a random sample of the rest.
   3. Spatial block cross-validation (128 x 128 px blocks, 5 folds) gives
@@ -36,6 +41,7 @@ __version__ = gems_metric.__version__
 
 NODATA_FLOOR = -1e38  # numeric_features.tif uses -3.4e38 as nodata
 THRESHOLDS = [0.02, 0.03, 0.05, 0.07, 0.1, 0.13, 0.17, 0.22, 0.3, 0.4, 0.5]
+EDGE_PX = 6  # twice the widest filter's sigma
 
 
 def check_submission_meta(meta, ref):
@@ -117,7 +123,11 @@ def load_labels(path):
 
 
 def band_features(band, valid):
-    """Standardised band plus edge and ridge responses, all float32 [H, W]."""
+    """Standardised band plus edge and ridge responses, all float32 [H, W].
+
+    Inside `valid`, cells where the band itself is missing stay NaN, and so
+    do its four filter responses within EDGE_PX px of them.
+    """
     import numpy as np
     from scipy import ndimage as ndi
 
@@ -139,10 +149,14 @@ def band_features(band, valid):
              ndi.gaussian_gradient_magnitude(z, 3.0),
              mean + half_diff,
              mean - half_diff]
+    gap = valid & ~np.isfinite(band)
+    near_gap = ndi.binary_dilation(gap, iterations=EDGE_PX) if gap.any() else None
     out = []
-    for f in feats:
+    for j, f in enumerate(feats):
         f = f.astype(np.float32)
         f[~valid] = np.nan
+        if near_gap is not None:
+            f[gap if j == 0 else near_gap] = np.nan
         out.append(f)
     return out
 
@@ -382,7 +396,7 @@ def main(argv=None):
     t.add_argument("--labels", required=True)
     t.add_argument("--extra-features", action="append", default=[],
                    help="another raster on the same grid (repeatable), "
-                        "e.g. gems_lidar.py output")
+                        "e.g. gems_lidar.py or gems_regrid.py output")
     t.add_argument("--out", default="submission.tif")
     t.add_argument("--workdir", default="work")
     t.add_argument("--folds", type=int, default=5)

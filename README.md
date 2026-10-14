@@ -14,13 +14,14 @@ name. MIT licence. It is shared publicly so every competitor can use it.
 | File | What it does |
 |---|---|
 | `gems_metric.py` | A local copy of the competition metric, the distance-weighted Tversky index (DTI), built from the public problem description. It has a plain-Python reference version and a fast numpy version, plus a threshold rule derived from the metric. |
-| `gems_baseline.py` | A CPU pipeline: edge and ridge features for every band, a gradient-boosted pixel classifier, spatial block cross-validation, a threshold chosen by the metric, a GeoTIFF writer, and a submission checker. `--extra-features` adds any other raster on the same grid (such as the lidar features below). Out-of-fold probabilities are saved as `work/oof.npy`. |
+| `gems_baseline.py` | A CPU pipeline: edge and ridge features for every band, a gradient-boosted pixel classifier, spatial block cross-validation, a threshold chosen by the metric, a GeoTIFF writer, and a submission checker. `--extra-features` adds any other raster on the same grid (such as the lidar or regridded features below). Out-of-fold probabilities are saved as `work/oof.npy`. Since 0.5.0, a band that covers only part of the area is left missing outside its coverage, and so are its edge filters within 6 px of the gap, so the edge of a survey is not learned as a fault. |
 | `gems_extend.py` | Finds the tips of the known faults and rasterises a short extension beyond each one along the fault's direction (pure numpy). `gems_baseline.py extend` ORs these into an existing submission without retraining. |
 | `gems_lidar.py` | Reads the 1 m lidar DEM tiles listed in `1m_DEM_links.csv` and summarises fault-scarp evidence for every 100 m cell: slope mean and 95th percentile, share of steep pixels, relief, and how much the slopes face one way (structure-tensor coherence). Resumable, so a long run over all tiles can be stopped and restarted. |
 | `gems_external.py` | Downloads the public-domain USGS Quaternary Fault and Fold Database (Qfaults) over the grid, or reads any GeoJSON of fault lines, projects it to UTM 11N without pyproj, and writes three bands on the competition grid: mapped line, distance to it, and *candidate* (mapped lines more than N px from any known fault). It reports how far the external map and the known faults agree, and `merge` ORs the candidates into a submission. |
-| `gems_robust.py` | New in 0.4.0. Checks how a submission holds up when the Final Round labels are revised. `table` gives the exact score of a band of width 1, 3 or 5 px against a straight fault that lies 0 to 3 px away. `stress` moves, removes and adds faults in a truth raster many times and re-scores each submission (or each threshold and dilation of `oof.npy`) against the same perturbed copies. |
-| `gems_shapes.py` | New in 0.4.0. Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` accepts. Made for the USGS Nevada geothermal data release below, whose gravity and magnetic lineations trace possible buried faults. |
-| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py` | 90 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, and shapefiles and dBASE tables built byte by byte from their published layouts. |
+| `gems_robust.py` | Checks how a submission holds up when the Final Round labels are revised. `table` gives the exact score of a band of width 1, 3 or 5 px against a straight fault that lies 0 to 3 px away. `stress` moves, removes and adds faults in a truth raster many times and re-scores each submission (or each threshold and dilation of `oof.npy`) against the same perturbed copies. |
+| `gems_shapes.py` | Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` and `gems_regrid.py points` accept. Made for the USGS Nevada geothermal data release below. |
+| `gems_regrid.py` | New in 0.5.0. Puts outside rasters and point layers on the competition grid as extra feature bands. `grid` samples ESRI ASCII grids (`.asc`, also straight from inside a zip as `ZIP::NAME`) or GeoTIFFs in UTM 11N onto the 100 m cells, bilinear or nearest, NaN beyond the source. `points` turns point layers into a distance band and a count band each. `list` shows the ASCII grids in a zip. |
+| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py` | 108 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, and the baseline's handling of a band with a gap. |
 
 ```
 pip install numpy scipy rasterio scikit-learn
@@ -39,12 +40,18 @@ python gems_robust.py stress --labels data/labels.tif --prob work/oof.npy --thre
 python gems_shapes.py list    --src USGScontributions_forNVML_dataRelease2021.zip
 python gems_shapes.py geojson --src USGScontributions_forNVML_dataRelease2021.zip --layer magneticLineations_nvML --out mag.geojson
 python gems_external.py rasterize --grid data/numeric_features.tif --lines mag.geojson --labels data/labels.tif --out mag_external.tif
+python gems_regrid.py list   --src USGScontributions_forNVML_dataRelease2021.zip
+python gems_regrid.py grid   --grid data/numeric_features.tif --src USGScontributions_forNVML_dataRelease2021.zip::grv_filthg --src USGScontributions_forNVML_dataRelease2021.zip::psg_filthg --src USGScontributions_forNVML_dataRelease2021.zip::hfnvml_est --src USGScontributions_forNVML_dataRelease2021.zip::tdts_nvml --out usgs_grids.tif
+python gems_shapes.py geojson --src USGScontributions_forNVML_dataRelease2021.zip --layer gravityIntersections_nvML --out grav_int.geojson
+python gems_regrid.py points --grid data/numeric_features.tif --points grav_int.geojson --out usgs_points.tif
+python gems_baseline.py train    --features data/numeric_features.tif --labels data/labels.tif --extra-features usgs_grids.tif --extra-features usgs_points.tif --out submission.tif
 ```
 
 **Status:** the metric, tip detection, lidar features, projection, band
-table and checks are unit-tested on synthetic grids. The pipeline has **not
-yet been run on the competition data**, which is available only to
-registered entrants. Results will be added here once it has.
+table, resampling and checks are unit-tested on synthetic grids. The
+pipeline has **not yet been run on the competition data**, which is
+available only to registered entrants. Results will be added here once it
+has.
 
 ## What the metric rewards
 
@@ -195,7 +202,7 @@ Any other GeoJSON of fault lines (for example faults from the USGS State
 Geologic Map Compilation, also public domain, exported from a GIS) can be
 passed with `--lines`, repeatedly.
 
-## Gravity and magnetic lineations (USGS Nevada geothermal data release)
+## USGS Nevada geothermal data release (lineations, gradients, heat flow)
 
 DeAngelo, J., Glen, J.M., Siler, D.L., Coolbaugh, M.F., Earney, T.E.,
 Dean, B.J., Zielinski, L.A. and Ritzinger, B.T., 2021, *USGS Contributions
@@ -205,9 +212,10 @@ data release, https://doi.org/10.5066/P9V5SQRD. Its metadata lists no
 access or use constraints, and the copy on the Geothermal Data Repository
 (submission 1349) is marked CC BY 4.0, so it meets the outside-data
 condition. It covers about 119.5 W to 114.4 W and 38.4 N to 40.7 N, so it
-should overlap the eastern part of the GeoDAWN area (the `rasterize` report
-shows how many cells it reaches). Coordinates are NAD83 transverse
-Mercator with UTM zone 11N parameters, the competition grid's own system.
+should overlap the eastern part of the GeoDAWN area (the reports below show
+how many cells it reaches). Its metadata gives NAD83 transverse Mercator
+with central meridian 117 W, scale 0.9996 and false easting 500 km, which
+is UTM zone 11N, the competition grid's own system.
 
 The 256 MB zip holds shapefiles that `gems_shapes.py` reads directly:
 
@@ -219,25 +227,51 @@ The 256 MB zip holds shapefiles that `gems_shapes.py` reads directly:
   under basin fill. These are the most direct candidates for GEMS' "hidden"
   faults.
 - `gravityEndpoints_nvML`, `gravityIntersections_nvML`,
-  `magneticEndpoints_nvML`, `magneticIntersections_nvML`: where lineations
-  end or cross. These are points,
-  which `rasterize` skips; they are kept in the GeoJSON for other uses.
+  `magneticEndpoints_nvML`, `magneticIntersections_nvML`,
+  `gravityMaxSpots_all_nvML`, `magneticMaxSpots_all_nvML`, `heatFlowWells_nvML`:
+  points. `gems_regrid.py points` turns each into two bands: distance to the
+  nearest point in px (capped at `--cap`, default 50 px = 5 km) and the
+  number of points in the square of half-width `--radius` (default 20 px)
+  around each cell. Points just outside the grid still count.
 - `quaternaryFaults_nvML` and `tdts2020nvML_faultLines`: mapped faults, the
   latter with slip and dilation tendency for each segment.
-- ESRI and ASCII grids (gradients, heat flow, tendency); those are not read
-  here.
 
-Use them like Qfaults: `rasterize` with `--labels` reports how far the
-lineations agree with the known faults, and its candidate band marks the
+and ESRI ASCII grids that `gems_regrid.py grid` reads straight from the zip
+(`ZIP::grv_filthg`), with the `.prj` beside each one checked for UTM 11N:
+
+- `grv`, `psg` (gravity and pseudo-gravity), their `_filt`, `_con` and
+  `_dmx` variants, and `grv_filthg`, `psg_filthg`, the horizontal gradients
+  whose crests the lineations were traced from;
+- `hfnvml_est`, `hfnvml_unc`: interpolated heat flow (mW/m^2) and its
+  uncertainty;
+- `tdts_nvml`: slip and dilation tendency.
+
+`python gems_regrid.py list --src <zip>` prints each grid's size and cell
+size. Sampling is bilinear between source cell centres; nodata neighbours
+are left out and the rest re-weighted, so values reach half a cell into a
+gap. Cells beyond a source are NaN, and the baseline then treats that band
+(and its filters within 6 px) as missing there rather than as a step.
+
+Use the lineations like Qfaults: `rasterize` with `--labels` reports how far
+they agree with the known faults, and its candidate band marks the
 lineation cells away from them. Lineations are about 225 m wide buffers
 reduced to centre lines, so their positions are uncertain by a pixel or
 two; by the width table above, a 3 px band is the safer way to submit them.
-Whether any of this pays is a question for the public leaderboard.
+The grids and point bands go into training with `--extra-features`. **Do not
+feed in points or grids derived from the known faults** (for example the
+vertices of `quaternaryFaults_nvML` or `tdts2020nvML_faultVertices` if they
+coincide with the labels): that is the same leakage as a distance-to-label
+feature. Check with `gems_external.py rasterize --labels` first. Whether any
+of this pays is a question for the public leaderboard.
 
 ## Ideas
 
 - The full-resolution GeoDAWN magnetic and radiometric grids are further
   public candidates for outside data.
+- The NBMG Nevada geothermal machine-learning project (Geothermal Data
+  Repository submissions 1350-1353, CC BY 4.0) publishes structural-setting
+  centroids as points and a distance-to-centroid GeoTIFF in UTM 11N, which
+  `gems_regrid.py` reads as they are.
 - **Distance to the known faults is not a training feature here on purpose.**
   The training labels are the known faults, so a distance-to-label feature
   would be leakage: it predicts the label perfectly in training and says
