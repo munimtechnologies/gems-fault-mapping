@@ -1,0 +1,883 @@
+{
+ "version": "0.6.0",
+ "release": "https://doi.org/10.5066/P9V5SQRD",
+ "download": "cached",
+ "grid": {
+  "origin": [
+   279100.0,
+   4511800.0
+  ],
+  "shape": [
+   2563,
+   4464
+  ],
+  "cell_m": 100.0,
+  "scored_cells": 10799672,
+  "fault_cells": 150394,
+  "near_cells": 903921,
+  "footprint": "grv_filthg: 1000 x 1728 cells of 250 m",
+  "fault_layer": "quaternaryFaults_nvML"
+ },
+ "features": [
+  {
+   "feature": "tdts_nvml",
+   "kind": "grid",
+   "derived": true,
+   "cells": 10615296,
+   "near_cells": 899424,
+   "auc": 0.5289,
+   "chance_auc": [
+    0.495,
+    0.4792,
+    0.494,
+    0.5063,
+    0.4989
+   ],
+   "edge": 0.0081,
+   "gems": {
+    "direction": "high",
+    "score": 0.0443,
+    "chance_score": 0.0153,
+    "lift": 2.89
+   }
+  },
+  {
+   "feature": "tdts_nvml_grad",
+   "kind": "gradient",
+   "derived": true,
+   "cells": 10602736,
+   "near_cells": 898881,
+   "auc": 0.8748,
+   "chance_auc": [
+    0.5008,
+    0.522,
+    0.5127,
+    0.5041,
+    0.4953
+   ],
+   "edge": 0.3527,
+   "gems": {
+    "direction": "high",
+    "score": 0.1794,
+    "chance_score": 0.0237,
+    "lift": 7.56
+   }
+  },
+  {
+   "feature": "grv",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.47,
+   "chance_auc": [
+    0.4808,
+    0.4711,
+    0.4763,
+    0.4702,
+    0.46
+   ],
+   "edge": -0.01,
+   "gems": {
+    "direction": "low",
+    "score": 0.0134,
+    "chance_score": 0.0141,
+    "lift": 0.95
+   }
+  },
+  {
+   "feature": "grv_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5575,
+   "chance_auc": [
+    0.486,
+    0.4937,
+    0.4887,
+    0.5057,
+    0.4962
+   ],
+   "edge": 0.0435,
+   "gems": {
+    "direction": "high",
+    "score": 0.0277,
+    "chance_score": 0.0168,
+    "lift": 1.64
+   }
+  },
+  {
+   "feature": "grv_con",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5561,
+   "chance_auc": [
+    0.5188,
+    0.5253,
+    0.5145,
+    0.5241,
+    0.5227
+   ],
+   "edge": 0.0308,
+   "gems": {
+    "direction": "high",
+    "score": 0.0118,
+    "chance_score": 0.0172,
+    "lift": 0.68
+   }
+  },
+  {
+   "feature": "grv_con_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5351,
+   "chance_auc": [
+    0.5165,
+    0.5174,
+    0.5123,
+    0.5183,
+    0.5187
+   ],
+   "edge": 0.0164,
+   "gems": {
+    "direction": "high",
+    "score": 0.017,
+    "chance_score": 0.0202,
+    "lift": 0.84
+   }
+  },
+  {
+   "feature": "grv_dmx",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10615296,
+   "near_cells": 899424,
+   "auc": 0.5669,
+   "chance_auc": [
+    0.5073,
+    0.4926,
+    0.5004,
+    0.5205,
+    0.5072
+   ],
+   "edge": 0.0464,
+   "gems": {
+    "direction": "high",
+    "score": 0.0231,
+    "chance_score": 0.0131,
+    "lift": 1.77
+   }
+  },
+  {
+   "feature": "grv_dmx_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10602736,
+   "near_cells": 898881,
+   "auc": 0.5524,
+   "chance_auc": [
+    0.4889,
+    0.4959,
+    0.494,
+    0.5081,
+    0.4916
+   ],
+   "edge": 0.0413,
+   "gems": {
+    "direction": "high",
+    "score": 0.0235,
+    "chance_score": 0.0146,
+    "lift": 1.61
+   }
+  },
+  {
+   "feature": "grv_filt",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.4695,
+   "chance_auc": [
+    0.4807,
+    0.471,
+    0.4762,
+    0.4701,
+    0.46
+   ],
+   "edge": -0.0095,
+   "gems": {
+    "direction": "low",
+    "score": 0.0135,
+    "chance_score": 0.014,
+    "lift": 0.96
+   }
+  },
+  {
+   "feature": "grv_filt_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5575,
+   "chance_auc": [
+    0.4851,
+    0.4938,
+    0.4878,
+    0.5052,
+    0.4951
+   ],
+   "edge": 0.0425,
+   "gems": {
+    "direction": "high",
+    "score": 0.0245,
+    "chance_score": 0.0153,
+    "lift": 1.6
+   }
+  },
+  {
+   "feature": "grv_filthg",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5575,
+   "chance_auc": [
+    0.4851,
+    0.4938,
+    0.4878,
+    0.5052,
+    0.4951
+   ],
+   "edge": 0.0425,
+   "gems": {
+    "direction": "high",
+    "score": 0.0245,
+    "chance_score": 0.0153,
+    "lift": 1.61
+   }
+  },
+  {
+   "feature": "grv_filthg_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5588,
+   "chance_auc": [
+    0.4995,
+    0.4999,
+    0.5032,
+    0.5173,
+    0.498
+   ],
+   "edge": 0.0415,
+   "gems": {
+    "direction": "high",
+    "score": 0.0316,
+    "chance_score": 0.0191,
+    "lift": 1.66
+   }
+  },
+  {
+   "feature": "psg",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10785589,
+   "near_cells": 902003,
+   "auc": 0.5004,
+   "chance_auc": [
+    0.5109,
+    0.5035,
+    0.5078,
+    0.4926,
+    0.5078
+   ],
+   "edge": -0.0104,
+   "gems": {
+    "direction": "high",
+    "score": 0.0211,
+    "chance_score": 0.0181,
+    "lift": 1.16
+   }
+  },
+  {
+   "feature": "psg_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10784860,
+   "near_cells": 901952,
+   "auc": 0.5133,
+   "chance_auc": [
+    0.5058,
+    0.5219,
+    0.5072,
+    0.5194,
+    0.4978
+   ],
+   "edge": -0.0085,
+   "gems": {
+    "direction": "high",
+    "score": 0.0141,
+    "chance_score": 0.018,
+    "lift": 0.78
+   }
+  },
+  {
+   "feature": "psg_con",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10792613,
+   "near_cells": 902934,
+   "auc": 0.466,
+   "chance_auc": [
+    0.4644,
+    0.4648,
+    0.4671,
+    0.4787,
+    0.4635
+   ],
+   "edge": -0.0024,
+   "gems": {
+    "direction": "low",
+    "score": 0.0168,
+    "chance_score": 0.0166,
+    "lift": 1.02
+   }
+  },
+  {
+   "feature": "psg_con_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10792304,
+   "near_cells": 902896,
+   "auc": 0.4989,
+   "chance_auc": [
+    0.499,
+    0.4995,
+    0.5002,
+    0.4996,
+    0.4994
+   ],
+   "edge": 0.0001,
+   "gems": {
+    "direction": "low",
+    "score": 0.0157,
+    "chance_score": 0.0163,
+    "lift": 0.97
+   }
+  },
+  {
+   "feature": "psg_dmx",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10615296,
+   "near_cells": 899424,
+   "auc": 0.5315,
+   "chance_auc": [
+    0.5326,
+    0.5269,
+    0.5206,
+    0.5319,
+    0.5222
+   ],
+   "edge": -0.0011,
+   "gems": {
+    "direction": "high",
+    "score": 0.012,
+    "chance_score": 0.0184,
+    "lift": 0.65
+   }
+  },
+  {
+   "feature": "psg_dmx_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10602736,
+   "near_cells": 898881,
+   "auc": 0.5162,
+   "chance_auc": [
+    0.5148,
+    0.5173,
+    0.5068,
+    0.5222,
+    0.5124
+   ],
+   "edge": -0.0061,
+   "gems": {
+    "direction": "high",
+    "score": 0.0124,
+    "chance_score": 0.0183,
+    "lift": 0.68
+   }
+  },
+  {
+   "feature": "psg_filt",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10785589,
+   "near_cells": 902003,
+   "auc": 0.5005,
+   "chance_auc": [
+    0.5109,
+    0.5035,
+    0.5078,
+    0.4926,
+    0.5078
+   ],
+   "edge": -0.0104,
+   "gems": {
+    "direction": "high",
+    "score": 0.0213,
+    "chance_score": 0.0181,
+    "lift": 1.18
+   }
+  },
+  {
+   "feature": "psg_filt_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10784860,
+   "near_cells": 901952,
+   "auc": 0.5122,
+   "chance_auc": [
+    0.505,
+    0.5207,
+    0.5064,
+    0.5183,
+    0.4972
+   ],
+   "edge": -0.0084,
+   "gems": {
+    "direction": "high",
+    "score": 0.0136,
+    "chance_score": 0.0178,
+    "lift": 0.76
+   }
+  },
+  {
+   "feature": "psg_filthg",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10785589,
+   "near_cells": 902003,
+   "auc": 0.5119,
+   "chance_auc": [
+    0.5048,
+    0.5205,
+    0.5063,
+    0.518,
+    0.4971
+   ],
+   "edge": -0.0086,
+   "gems": {
+    "direction": "high",
+    "score": 0.0135,
+    "chance_score": 0.0178,
+    "lift": 0.76
+   }
+  },
+  {
+   "feature": "psg_filthg_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10784860,
+   "near_cells": 901952,
+   "auc": 0.5187,
+   "chance_auc": [
+    0.5189,
+    0.523,
+    0.5215,
+    0.521,
+    0.5202
+   ],
+   "edge": -0.0044,
+   "gems": {
+    "direction": "high",
+    "score": 0.0142,
+    "chance_score": 0.0205,
+    "lift": 0.69
+   }
+  },
+  {
+   "feature": "hfnvml_est",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.4712,
+   "chance_auc": [
+    0.47,
+    0.4718,
+    0.4744,
+    0.4743,
+    0.4742
+   ],
+   "edge": -0.0012,
+   "gems": {
+    "direction": "low",
+    "score": 0.0145,
+    "chance_score": 0.0162,
+    "lift": 0.9
+   }
+  },
+  {
+   "feature": "hfnvml_est_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.4933,
+   "chance_auc": [
+    0.4831,
+    0.5056,
+    0.4908,
+    0.4966,
+    0.4867
+   ],
+   "edge": -0.0102,
+   "gems": {
+    "direction": "low",
+    "score": 0.0181,
+    "chance_score": 0.0149,
+    "lift": 1.21
+   }
+  },
+  {
+   "feature": "hfnvml_unc",
+   "kind": "grid",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5122,
+   "chance_auc": [
+    0.5159,
+    0.4892,
+    0.5123,
+    0.5052,
+    0.5213
+   ],
+   "edge": -0.0092,
+   "gems": {
+    "direction": "high",
+    "score": 0.0272,
+    "chance_score": 0.0218,
+    "lift": 1.25
+   }
+  },
+  {
+   "feature": "hfnvml_unc_grad",
+   "kind": "gradient",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.4792,
+   "chance_auc": [
+    0.4646,
+    0.4919,
+    0.4828,
+    0.495,
+    0.4667
+   ],
+   "edge": -0.0146,
+   "gems": {
+    "direction": "low",
+    "score": 0.0113,
+    "chance_score": 0.0156,
+    "lift": 0.73
+   }
+  },
+  {
+   "feature": "dist_gravityEndpoints_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.502,
+   "chance_auc": [
+    0.5124,
+    0.5062,
+    0.5178,
+    0.507,
+    0.513
+   ],
+   "edge": -0.0158,
+   "gems": {
+    "direction": "high",
+    "score": 0.0267,
+    "chance_score": 0.0275,
+    "lift": 0.97
+   }
+  },
+  {
+   "feature": "dist_gravityIntersections_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5238,
+   "chance_auc": [
+    0.5209,
+    0.4962,
+    0.5154,
+    0.5127,
+    0.509
+   ],
+   "edge": 0.0029,
+   "gems": {
+    "direction": "high",
+    "score": 0.0264,
+    "chance_score": 0.0246,
+    "lift": 1.07
+   }
+  },
+  {
+   "feature": "dist_gravityLineations_nvML",
+   "kind": "line distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5176,
+   "chance_auc": [
+    0.5154,
+    0.4987,
+    0.5083,
+    0.5113,
+    0.5083
+   ],
+   "edge": 0.0022,
+   "gems": {
+    "direction": "high",
+    "score": 0.0431,
+    "chance_score": 0.0401,
+    "lift": 1.07
+   }
+  },
+  {
+   "feature": "dist_gravityMaxSpots_all_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.494,
+   "chance_auc": [
+    0.5141,
+    0.4986,
+    0.5087,
+    0.5094,
+    0.5082
+   ],
+   "edge": -0.0082,
+   "gems": {
+    "direction": "low",
+    "score": 0.0171,
+    "chance_score": 0.0158,
+    "lift": 1.08
+   }
+  },
+  {
+   "feature": "dist_gravitySaddles_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5133,
+   "chance_auc": [
+    0.5258,
+    0.4982,
+    0.5085,
+    0.5166,
+    0.516
+   ],
+   "edge": -0.0125,
+   "gems": {
+    "direction": "high",
+    "score": 0.0286,
+    "chance_score": 0.0291,
+    "lift": 0.98
+   }
+  },
+  {
+   "feature": "dist_gravityStations_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5467,
+   "chance_auc": [
+    0.5145,
+    0.5084,
+    0.5059,
+    0.5236,
+    0.509
+   ],
+   "edge": 0.0231,
+   "gems": {
+    "direction": "high",
+    "score": 0.0527,
+    "chance_score": 0.0462,
+    "lift": 1.14
+   }
+  },
+  {
+   "feature": "dist_heatFlowWells_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.4997,
+   "chance_auc": [
+    0.4986,
+    0.5202,
+    0.5008,
+    0.5011,
+    0.4913
+   ],
+   "edge": -0.0199,
+   "gems": {
+    "direction": "low",
+    "score": 0.0152,
+    "chance_score": 0.0185,
+    "lift": 0.82
+   }
+  },
+  {
+   "feature": "dist_magneticEndpoints_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5128,
+   "chance_auc": [
+    0.5267,
+    0.5222,
+    0.5139,
+    0.5106,
+    0.5143
+   ],
+   "edge": -0.0139,
+   "gems": {
+    "direction": "high",
+    "score": 0.0263,
+    "chance_score": 0.0256,
+    "lift": 1.03
+   }
+  },
+  {
+   "feature": "dist_magneticIntersections_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5191,
+   "chance_auc": [
+    0.5423,
+    0.5181,
+    0.5319,
+    0.5239,
+    0.5328
+   ],
+   "edge": -0.0232,
+   "gems": {
+    "direction": "high",
+    "score": 0.0203,
+    "chance_score": 0.021,
+    "lift": 0.96
+   }
+  },
+  {
+   "feature": "dist_magneticLineations_nvML",
+   "kind": "line distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5279,
+   "chance_auc": [
+    0.5291,
+    0.516,
+    0.5136,
+    0.5163,
+    0.513
+   ],
+   "edge": -0.0012,
+   "gems": {
+    "direction": "high",
+    "score": 0.0475,
+    "chance_score": 0.0425,
+    "lift": 1.12
+   }
+  },
+  {
+   "feature": "dist_magneticMaxSpots_all_nvML",
+   "kind": "point distance",
+   "derived": false,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.5214,
+   "chance_auc": [
+    0.5246,
+    0.5179,
+    0.5124,
+    0.5156,
+    0.5185
+   ],
+   "edge": -0.0032,
+   "gems": {
+    "direction": "high",
+    "score": 0.1011,
+    "chance_score": 0.0977,
+    "lift": 1.03
+   }
+  },
+  {
+   "feature": "dist_tdts2020nvML_faultLines",
+   "kind": "line distance",
+   "derived": true,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 1.0,
+   "chance_auc": [
+    0.5251,
+    0.5095,
+    0.5546,
+    0.5594,
+    0.5247
+   ],
+   "edge": 0.4406,
+   "gems": {
+    "direction": "high",
+    "score": 1.0,
+    "chance_score": 0.0454,
+    "lift": 22.02
+   }
+  },
+  {
+   "feature": "dist_tdts2020nvML_faultVertices",
+   "kind": "point distance",
+   "derived": true,
+   "cells": 10799672,
+   "near_cells": 903921,
+   "auc": 0.9989,
+   "chance_auc": [
+    0.5254,
+    0.5095,
+    0.5547,
+    0.5595,
+    0.5249
+   ],
+   "edge": 0.4394,
+   "gems": {
+    "direction": "high",
+    "score": 0.8385,
+    "chance_score": 0.0475,
+    "lift": 17.65
+   }
+  }
+ ],
+ "skipped": {},
+ "seconds": 475.5
+}

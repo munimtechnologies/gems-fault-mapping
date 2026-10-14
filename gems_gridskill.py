@@ -2,7 +2,7 @@
 
     python gems_gridskill.py run --data-dir data/ --out-dir gridskill/ --download
     python gems_gridskill.py run --src USGScontributions_forNVML_dataRelease2021.zip \
-                                 --out-dir gridskill/
+                                 --out-dir gridskill/ --block-km 10 --block-km 25
 
 gems_agreement.py found that lineations traced along gravity and magnetic
 gradient maxima land near mapped Quaternary faults hardly more often than the
@@ -30,6 +30,12 @@ only their alignment. "edge" is |AUC - 0.5| minus the largest |chance AUC -
 top cells (as many as there are fault cells, on the side the AUC points to)
 are also scored as a fault map with the GEMS metric next to the same
 shifted-map chance.
+
+With --block-km B (new in 0.8.0) the AUC is also taken within square blocks
+of B km only: a near-fault cell is compared only with other cells of its own
+block, and the pairs of all blocks are pooled (a stratified Mann-Whitney).
+A layer that is merely high over the faulted part of the region, and not
+along the faults within it, scores 0.5 there.
 
 Layers computed from the fault traces themselves (slip and dilation tendency,
 the fault vertices) are flagged "derived": they are a positive control, not
@@ -100,6 +106,50 @@ def score_feature(values, valid, targets):
             for t in targets]
 
 
+def block_ids(valid, block_px):
+    """Block number of each valid cell, in the order of values[valid], for
+    square blocks of block_px cells counted from the grid's top left."""
+    rows, cols = np.nonzero(np.asarray(valid, dtype=bool))
+    per_row = -(-np.shape(valid)[1] // block_px)
+    return (rows // block_px) * per_row + cols // block_px
+
+
+def block_ranks(v, bid):
+    """1-based ranks of v within each block id, ties given their mean rank."""
+    v = np.asarray(v)
+    bid = np.asarray(bid)
+    n = len(v)
+    if not n:
+        return np.empty(0, dtype=np.float64)
+    order = np.lexsort((v, bid))
+    bs, vs = bid[order], v[order]
+    new_block = np.r_[True, bs[1:] != bs[:-1]]
+    new_group = new_block | np.r_[True, vs[1:] != vs[:-1]]
+    starts = np.flatnonzero(new_group)
+    ends = np.r_[starts[1:], n]
+    rank = np.repeat((starts + ends + 1) / 2.0, ends - starts)
+    block_start = np.flatnonzero(new_block)[np.cumsum(new_block) - 1]
+    ranks = np.empty(n, dtype=np.float64)
+    ranks[order] = rank - block_start
+    return ranks
+
+
+def stratified_auc(ranks, bid, pos):
+    """(AUC over same-block pairs only, number of blocks holding both
+    classes) from block_ranks; AUC None when no block holds both."""
+    pos = np.asarray(pos, dtype=bool)
+    bid = np.asarray(bid)
+    n = np.bincount(bid).astype(np.float64)
+    n1 = np.bincount(bid, weights=pos.astype(np.float64), minlength=len(n))
+    r1 = np.bincount(bid, weights=np.where(pos, ranks, 0.0), minlength=len(n))
+    pairs = n1 * (n - n1)
+    ok = pairs > 0
+    if not ok.any():
+        return None, 0
+    u = r1[ok] - n1[ok] * (n1[ok] + 1) / 2.0
+    return float(u.sum() / pairs[ok].sum()), int(ok.sum())
+
+
 def gradient_per_km(src):
     """Source of the horizontal gradient magnitude of a Source, per km."""
     v = np.asarray(src.values, dtype=np.float64)
@@ -132,8 +182,10 @@ def layer_points(layer):
             for part in parts for p in part]
 
 
-def evaluate(name, values, mask, near, shifts, fault, kind, gems=True):
-    """One feature's row of the report."""
+def evaluate(name, values, mask, near, shifts, fault, kind, gems=True,
+             blocks=()):
+    """One feature's row of the report. blocks: block sizes in cells for
+    the within-block AUC."""
     valid = mask & np.isfinite(values)
     targets = [near] + [np.roll(near, sh, axis=(0, 1)) for sh in shifts]
     aucs = score_feature(values, valid, targets)
@@ -147,6 +199,24 @@ def evaluate(name, values, mask, near, shifts, fault, kind, gems=True):
     row["chance_auc"] = [round(a, 4) for a in chance]
     worst = max(abs(a - 0.5) for a in chance) if chance else 0.0
     row["edge"] = round(abs(aucs[0] - 0.5) - worst, 4)
+    if blocks:
+        v = np.asarray(values)[valid]
+        row["block"] = []
+        for px in blocks:
+            bid = block_ids(valid, px)
+            ranks = block_ranks(v, bid)
+            got = [stratified_auc(ranks, bid, np.asarray(t, dtype=bool)[valid])
+                   for t in targets]
+            if got[0][0] is None:
+                row["block"].append({"px": int(px), "auc": None})
+                continue
+            b_chance = [a for a, _n in got[1:] if a is not None]
+            b_worst = max(abs(a - 0.5) for a in b_chance) if b_chance else 0.0
+            row["block"].append({
+                "px": int(px), "auc": round(got[0][0], 4),
+                "blocks": got[0][1],
+                "chance_auc": [round(a, 4) for a in b_chance],
+                "edge": round(abs(got[0][0] - 0.5) - b_worst, 4)})
     if gems:
         sign = 1.0 if aucs[0] >= 0.5 else -1.0
         k = int((fault & valid).sum())
@@ -161,6 +231,12 @@ def evaluate(name, values, mask, near, shifts, fault, kind, gems=True):
 def markdown(report):
     rows = sorted([r for r in report["features"] if r.get("auc") is not None],
                   key=lambda r: -r["edge"])
+    cell = report["grid"].get("cell_m", gems_agreement.CELL_M)
+    sizes = []
+    for r in rows:
+        for b in r.get("block") or []:
+            if b["px"] not in sizes:
+                sizes.append(b["px"])
     out = ["# Which public layers single out cells near mapped Quaternary faults",
            "",
            "gems_gridskill.py %s, data: %s, %d scored cells, %d within 300 m of "
@@ -173,17 +249,36 @@ def markdown(report):
            "shifted-map chance in brackets. * = derived from the fault traces "
            "(positive control)." % (
                report["version"], report["release"],
-               report["grid"]["scored_cells"], report["grid"]["near_cells"]),
-           "",
-           "| feature | AUC | chance AUC | edge | GEMS (chance) |",
-           "|---|---|---|---|---|"]
+               report["grid"]["scored_cells"], report["grid"]["near_cells"])]
+    if sizes:
+        out.append("")
+        out.append("Within B km: the AUC over pairs of cells in the same B km "
+                   "square block only, pooled over blocks, with the same "
+                   "shifted-map chance (min-max) and edge.")
+    head = "| feature | AUC | chance AUC | edge | GEMS (chance) |"
+    rule = "|---|---|---|---|---|"
+    for px in sizes:
+        head += " within %g km (chance) | edge |" % (px * cell / 1000.0)
+        rule += "---|---|"
+    out += ["", head, rule]
     for r in rows:
         ch = r.get("chance_auc") or []
         g = r.get("gems")
-        out.append("| %s%s | %.3f | %s | %+.3f | %s |" % (
+        line = "| %s%s | %.3f | %s | %+.3f | %s |" % (
             r["feature"], " *" if r["derived"] else "", r["auc"],
             "%.3f-%.3f" % (min(ch), max(ch)) if ch else "-", r["edge"],
-            "%.3f (%.3f)" % (g["score"], g["chance_score"] or 0.0) if g else "-"))
+            "%.3f (%.3f)" % (g["score"], g["chance_score"] or 0.0) if g else "-")
+        by_px = {b["px"]: b for b in r.get("block") or []}
+        for px in sizes:
+            b = by_px.get(px)
+            if not b or b.get("auc") is None:
+                line += " - | - |"
+                continue
+            bc = b.get("chance_auc") or []
+            line += " %.3f (%s) | %+.3f |" % (
+                b["auc"], "%.3f-%.3f" % (min(bc), max(bc)) if bc else "-",
+                b["edge"])
+        out.append(line)
     if report.get("skipped"):
         out += ["", "Not scored: " + "; ".join(
             "%s (%s)" % (k, v) for k, v in sorted(report["skipped"].items()))]
@@ -207,6 +302,8 @@ def cmd_run(args):
         mask &= foot
     cell = gems_agreement.CELL_M
     shifts = gems_agreement.SHIFTS_PX
+    blocks = tuple(sorted({max(1, int(round(km * 1000.0 / cell)))
+                           for km in args.block_km or ()}))
 
     layers = gems_shapes._layers(zip_path)
     types = {}
@@ -226,7 +323,7 @@ def cmd_run(args):
                       "cell_m": cell, "scored_cells": int(mask.sum()),
                       "fault_cells": int(fault.sum()),
                       "near_cells": int(near.sum()), "footprint": note,
-                      "fault_layer": qname}
+                      "fault_layer": qname, "block_px": list(blocks)}
     print(json.dumps(report["grid"]))
     sys.stdout.flush()
 
@@ -234,11 +331,12 @@ def cmd_run(args):
 
     def add(name, values, kind):
         row = evaluate(name, values, mask, near, shifts, fault, kind,
-                       gems=not args.no_gems)
+                       gems=not args.no_gems, blocks=blocks)
         rows.append(row)
-        print("%-34s auc %s  edge %s  gems %s" % (
+        print("%-34s auc %s  edge %s  gems %s  block %s" % (
             name, row.get("auc"), row.get("edge"),
-            (row.get("gems") or {}).get("score")))
+            (row.get("gems") or {}).get("score"),
+            [(b.get("auc"), b.get("edge")) for b in row.get("block") or []]))
         sys.stdout.flush()
 
     try:
@@ -310,6 +408,9 @@ def main(argv=None):
                    help="download the 256 MB release zip into --data-dir")
     r.add_argument("--no-gems", action="store_true",
                    help="skip the GEMS-metric score of each feature's top cells")
+    r.add_argument("--block-km", type=float, action="append",
+                   help="also score the AUC within square blocks of this many "
+                        "km (repeatable)")
     args = ap.parse_args(argv)
     return {"run": cmd_run}[args.cmd](args)
 
