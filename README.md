@@ -21,8 +21,9 @@ name. Apache-2.0 licence. It is shared publicly so every competitor can use it.
 | `gems_robust.py` | Checks how a submission holds up when the Final Round labels are revised. `table` gives the exact score of a band of width 1, 3 or 5 px against a straight fault that lies 0 to 3 px away. `stress` moves, removes and adds faults in a truth raster many times and re-scores each submission (or each threshold and dilation of `oof.npy`) against the same perturbed copies. |
 | `gems_shapes.py` | Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` and `gems_regrid.py points` accept. Made for the USGS Nevada geothermal data release below. |
 | `gems_regrid.py` | Puts outside rasters and point layers on the competition grid as extra feature bands. `grid` samples ESRI ASCII grids (`.asc`, also straight from inside a zip as `ZIP::NAME`) or GeoTIFFs in UTM 11N onto the 100 m cells, bilinear or nearest, NaN beyond the source. `points` turns point layers into a distance band and a count band each. `list` shows the ASCII grids in a zip. |
-| `gems_agreement.py` | New in 0.6.0. Scores how far public fault maps agree **with each other** using the GEMS metric: the Quaternary faults, fault lines and gravity and magnetic lineations of the USGS Nevada release, and the live USGS Qfaults database, every ordered pair, with a chance baseline and a distance profile from 100 m to 5 km. Needs only numpy (scipy optional), no competition data. See "How far public fault maps agree" below. |
-| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py`, `test_agreement.py` | 123 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, the baseline's handling of a band with a gap, map comparison and distance profiles on hand-worked lines, and end-to-end agreement runs on a small zip. |
+| `gems_agreement.py` | Scores how far public fault maps agree **with each other** using the GEMS metric: the Quaternary faults, fault lines and gravity and magnetic lineations of the USGS Nevada release, and the live USGS Qfaults database, every ordered pair, with a chance baseline and a distance profile from 100 m to 5 km. Needs only numpy (scipy optional), no competition data. See "How far public fault maps agree" below. |
+| `gems_gridskill.py` | New in 0.7.0. Asks, for **every** layer of the USGS Nevada release (each 250 m grid, its gradient magnitude, and the distance to each point and lineation layer), whether it ranks the cells within 300 m of a mapped Quaternary fault above the other cells: an AUC against the same near-fault map shifted 14 to 21 km, plus the GEMS score of each layer's top cells. Layers derived from the fault traces are flagged as a positive control. See "Which layers single out cells near mapped faults" below. |
+| `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py`, `test_agreement.py`, `test_gridskill.py` | 133 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, the baseline's handling of a band with a gap, map comparison and distance profiles on hand-worked lines, end-to-end agreement runs on a small zip, tied ranks and AUC on hand-worked arrays, the gradient of a plane, top-k maps, and a distance feature's skill on a synthetic fault. |
 
 ```
 pip install numpy scipy rasterio scikit-learn
@@ -47,13 +48,16 @@ python gems_shapes.py geojson --src USGScontributions_forNVML_dataRelease2021.zi
 python gems_regrid.py points --grid data/numeric_features.tif --points grav_int.geojson --out usgs_points.tif
 python gems_baseline.py train    --features data/numeric_features.tif --labels data/labels.tif --extra-features usgs_grids.tif --extra-features usgs_points.tif --out submission.tif
 python gems_agreement.py run --data-dir data --out-dir agreement --download --qfaults
+python gems_gridskill.py run --data-dir data --out-dir gridskill --download
 ```
 
 **Status:** the metric, tip detection, lidar features, projection, band
-table, resampling, map comparison and checks are unit-tested on synthetic
-grids. The pipeline has **not yet been run on the competition data**, which
-is available only to registered entrants. `gems_shapes.py`, `gems_regrid.py`
-and `gems_agreement.py` have run on the real USGS release (results below).
+table, resampling, map comparison, ranking and checks are unit-tested on
+synthetic grids. The pipeline has **not yet been run on the competition
+data**, which is available only to registered entrants. `gems_shapes.py`,
+`gems_regrid.py` and `gems_agreement.py` have run on the real USGS release
+(results below). `gems_gridskill.py` is queued to run on it; its table will
+be added to `docs/` with the next release.
 
 ## What the metric rewards
 
@@ -184,7 +188,7 @@ What this says:
   surface trace. Either way, **drawing the lineations as predicted faults
   would score close to chance**; they belong in a model as distance or
   density features, where it can learn the offset. The distance profile
-  (added in this release; its numbers come with the next run) tests at what
+  (added in 0.6.0; its numbers come with the next run) tests at what
   scale, if any, the two are related.
 
 Limits: this compares maps with each other, not with the GEMS labels, which
@@ -198,6 +202,38 @@ organisers mask the known USGS/INGENIOUS faults when scoring, so what
 matters for an entry is the part of a public map that lies **away** from the
 known faults; `gems_external.py rasterize --labels` measures that once the
 competition data is at hand.
+
+## Which layers single out cells near mapped faults
+
+A drawn lineation is a hard yes or no. `gems_gridskill.py run` asks the
+softer question of every layer in the USGS Nevada release: does it rank the
+cells within 300 m of a mapped Quaternary fault (the metric's reach) above
+the other cells? On the same 100 m study grid as `gems_agreement.py`:
+
+- Features: each 250 m ASCII grid sampled bilinearly (gravity,
+  pseudo-gravity and their filtered variants, heat flow and its
+  uncertainty, slip and dilation tendency); each grid's horizontal gradient
+  magnitude per km; and minus the distance (capped at 10 km) to the nearest
+  point or line of every point and lineation layer, so "higher" always
+  means "closer".
+- Skill: the area under the ROC curve (AUC), the chance that a random
+  near-fault cell outranks a random other cell, ties counting half. The null
+  model scores the same feature against the near-fault map shifted 14 to
+  21 km in five directions, which keeps how smooth both maps are and breaks
+  only their alignment. "Edge" is |AUC - 0.5| minus the largest shifted
+  |AUC - 0.5|: above zero, the feature beats every shifted placement.
+- Each feature's top cells (as many as there are fault cells, on the side
+  the AUC points to) are also scored as a fault map with the GEMS metric,
+  next to the shifted-map chance.
+- Layers computed from the fault traces (slip and dilation tendency, the
+  fault vertices) are flagged with `*`: they are a positive control, not
+  independent evidence.
+
+It writes `gridskill.json` and `gridskill.md`. The first run on the real
+release is queued; its table goes into `docs/` with the next release. The
+point of the ranking is to choose which public layers are worth feeding to
+`gems_baseline.py train --extra-features`, and to say in public which ones
+carry no signal about young faults at this scale.
 
 ## What the organisers have said on the forum
 
