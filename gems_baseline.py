@@ -28,7 +28,7 @@ Method (a pixel classifier, kept simple so it runs on a CPU):
 numpy, scipy, rasterio and scikit-learn are imported only where needed, so
 the metadata checks below can be tested with the standard library alone.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

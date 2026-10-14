@@ -15,7 +15,7 @@ the organisers' code, so treat small differences (eps, edge handling) as
 possible. `dti_reference` is plain Python for checking; `dti` is the fast
 numpy version for full 3730 x 3292 rasters.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import math

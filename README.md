@@ -7,7 +7,7 @@ Submissions close **3 December 2026**.
 Competition: https://www.drivendata.org/competitions/306/competition-doe-gems/
 
 By MV2 of Munim, Inc. The code was written with AI agents working in MV2's
-name. MIT licence. It is shared publicly so every competitor can use it.
+name. Apache-2.0 licence. It is shared publicly so every competitor can use it.
 
 ## What is here
 

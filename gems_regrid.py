@@ -26,7 +26,7 @@ between cell centres with scipy, chessboard without it), capped at --cap,
 and the number of points in the (2 radius + 1) px square around each cell.
 Points up to --cap px outside the grid still count, so the edges are right.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

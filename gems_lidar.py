@@ -27,7 +27,7 @@ cell wins (3DEP tiles overlap by a few metres). Tiles must be in UTM zone
 run can be stopped and resumed. Feed the output to
 `gems_baseline.py train --extra-features lidar_features.tif`.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

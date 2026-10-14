@@ -33,7 +33,7 @@ Lines in longitude/latitude (GeoJSON's default) are projected to UTM zone
 1395), so neither pyproj nor GDAL is needed for that step. NAD83 and WGS84
 differ by about a metre here, far below the 100 m cell.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

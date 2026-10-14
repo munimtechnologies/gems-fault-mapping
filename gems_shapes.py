@@ -23,7 +23,7 @@ or WGS84) adds a `crs` member that gems_external.py reads as metres, and a
 geographic .prj leaves the GeoJSON default (longitude/latitude). Any other
 projection is refused rather than guessed.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

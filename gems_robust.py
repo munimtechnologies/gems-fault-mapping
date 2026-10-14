@@ -21,7 +21,7 @@ pixels of today's labels can lose most of that edge. Two tools:
 `table` uses the standard library only; `stress` needs numpy and scipy (and
 rasterio to read GeoTIFFs).
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse

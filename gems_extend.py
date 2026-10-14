@@ -23,7 +23,7 @@ Method (pure numpy, works on the raw 100 m raster, no thinning needed):
      the dominant axis (so steps are distinct and 8-connected), marking
      pixels that are inside the grid and not already known fault.
 
-By MV2 of Munim, Inc. Made with AI agents. MIT licence.
+By MV2 of Munim, Inc. Made with AI agents. Apache-2.0 licence.
 """
 
 import argparse
