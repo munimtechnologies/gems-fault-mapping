@@ -22,8 +22,8 @@ name. Apache-2.0 licence. It is shared publicly so every competitor can use it.
 | `gems_shapes.py` | Reads shapefiles (plain, in a zip, or in a zip inside a zip) with the standard library only and writes GeoJSON that `gems_external.py rasterize` and `gems_regrid.py points` accept. Made for the USGS Nevada geothermal data release below. |
 | `gems_regrid.py` | Puts outside rasters and point layers on the competition grid as extra feature bands. `grid` samples ESRI ASCII grids (`.asc`, also straight from inside a zip as `ZIP::NAME`) or GeoTIFFs in UTM 11N onto the 100 m cells, bilinear or nearest, NaN beyond the source. `points` turns point layers into a distance band and a count band each. `list` shows the ASCII grids in a zip. |
 | `gems_agreement.py` | Scores how far public fault maps agree **with each other** using the GEMS metric: the Quaternary faults, fault lines and gravity and magnetic lineations of the USGS Nevada release, and the live USGS Qfaults database, every ordered pair, with a chance baseline and a distance profile from 100 m to 5 km. Needs only numpy (scipy optional), no competition data. See "How far public fault maps agree" below. |
-| `gems_gridskill.py` | Asks, for **every** layer of the USGS Nevada release (each 250 m grid, its gradient magnitude, and the distance to each point and lineation layer), whether it ranks the cells within 300 m of a mapped Quaternary fault above the other cells: an AUC against the same near-fault map shifted 14 to 21 km, plus the GEMS score of each layer's top cells. Layers derived from the fault traces are flagged as a positive control. New in 0.8.0: `--block-km B` also scores the AUC within B km blocks only. See "Which layers single out cells near mapped faults" below. |
-| `docs/` | Results on the real USGS release (CC BY 4.0): `agreement-2026-10.md/.json` (map against map, with the distance profile) and `layer-skill-2026-10.md/.json` (every layer ranked). |
+| `gems_gridskill.py` | Asks, for **every** layer of the USGS Nevada release (each 250 m grid, its gradient magnitude, and the distance to each point and lineation layer), whether it ranks the cells within 300 m of a mapped Quaternary fault above the other cells: an AUC against the same near-fault map shifted 14 to 21 km, plus the GEMS score of each layer's top cells. Layers derived from the fault traces are flagged as a positive control. `--block-km B` (0.8.0) also scores the AUC within B km blocks only. See "Which layers single out cells near mapped faults" below. |
+| `docs/` | Results on the real USGS release (CC BY 4.0): `agreement-2026-10.md/.json` (map against map, with the distance profile), `layer-skill-2026-10.md/.json` (every layer ranked) and `layer-skill-blocks-2026-10.json` (the same ranking within 10 km and 25 km blocks, written up in `layer-skill-2026-10.md`). |
 | `test_gems.py`, `test_external.py`, `test_robust.py`, `test_shapes.py`, `test_regrid.py`, `test_agreement.py`, `test_gridskill.py` | 141 offline tests: the metric on hand-worked grids, numpy against the reference on random grids, tip detection on lines, junctions and thick lines, lidar features on planes, scarps and bowls, a tile landing on the right cells, the projection against Snyder's published worked example, line rasterising, paged downloads with a fake server, the submission checks, the band table checked by hand and against the metric on a grid, shapefiles and dBASE tables built byte by byte from their published layouts, ASCII grids with wrapped rows, resampling a plane, gaps and edges, point bands across the grid edge, the baseline's handling of a band with a gap, map comparison and distance profiles on hand-worked lines, end-to-end agreement runs on a small zip, tied ranks and AUC on hand-worked arrays, within-block ranks and AUC on hand-worked grids (including a regional step that pooled AUC rewards and blocks do not), the gradient of a plane, top-k maps, and a distance feature's skill on a synthetic fault. |
 
 ```
@@ -57,9 +57,9 @@ python gems_gridskill.py run --data-dir data --out-dir gridskill_blocks --no-gem
 table, resampling, map comparison, ranking and checks are unit-tested on
 synthetic grids. The pipeline has **not yet been run on the competition
 data**, which is available only to registered entrants. `gems_shapes.py`,
-`gems_regrid.py`, `gems_agreement.py` and `gems_gridskill.py` have run on
-the real USGS release (results below and in `docs/`). The within-block run
-of `gems_gridskill.py` is queued.
+`gems_regrid.py`, `gems_agreement.py` and `gems_gridskill.py` (pooled and
+within blocks) have run on the real USGS release (results below and in
+`docs/`).
 
 ## What the metric rewards
 
@@ -237,49 +237,62 @@ the other cells? On the same 100 m study grid as `gems_agreement.py`:
 - Layers computed from the fault traces (slip and dilation tendency, the
   fault vertices) are flagged with `*`: they are a positive control, not
   independent evidence.
-- New in 0.8.0, `--block-km B` also takes the AUC over pairs of cells in the
-  same B km block only, pooled over blocks. A layer that is merely high over
-  the faulted part of the region scores 0.5 there; one that follows the
-  faults within each block keeps its AUC.
+- `--block-km B` also takes the AUC over pairs of cells in the same B km
+  block only, pooled over blocks. A layer that is merely high over the
+  faulted part of the region scores 0.5 there; one that follows the faults
+  within each block keeps its AUC.
 
-### Results (14 October 2026)
+### Results (14-15 October 2026)
 
 39 features, 903,921 near-fault cells among 10,799,672, 476 s on 4 CPU
-cores. Full table and discussion:
+cores (558 s for the within-block run). Full tables and discussion:
 [`docs/layer-skill-2026-10.md`](docs/layer-skill-2026-10.md), raw numbers:
-[`docs/layer-skill-2026-10.json`](docs/layer-skill-2026-10.json).
+[`docs/layer-skill-2026-10.json`](docs/layer-skill-2026-10.json) and
+[`docs/layer-skill-blocks-2026-10.json`](docs/layer-skill-blocks-2026-10.json).
 
-| feature | AUC | shifted AUC | edge | GEMS of top cells (chance) |
-|---|---|---|---|---|
-| distance to the fault lines * (positive control) | 1.000 | 0.509-0.559 | +0.441 | 1.000 (0.045) |
-| slip/dilation tendency gradient * | 0.875 | 0.495-0.522 | +0.353 | 0.179 (0.024) |
-| best gravity layer (`grv_dmx`) | 0.567 | 0.493-0.520 | +0.046 | 0.023 (0.013) |
-| six gravity-gradient layers | 0.552-0.567 | 0.485-0.520 | +0.041 to +0.046 | 0.023-0.032 |
-| distance to gravity stations | 0.547 | 0.506-0.524 | +0.023 | 0.053 (0.046) |
-| distance to gravity lineations | 0.518 | 0.499-0.515 | +0.002 | 0.043 (0.040) |
-| ten pseudo-gravity (magnetic) layers | 0.466-0.531 | | -0.010 to +0.000 | |
-| heat flow, its uncertainty, their gradients | 0.471-0.512 | | -0.015 to -0.001 | |
-| distance to magnetic lineations | 0.528 | 0.513-0.529 | -0.001 | 0.048 (0.043) |
+| feature | AUC | shifted AUC | edge | GEMS of top cells (chance) | edge within 10 km blocks | edge within 25 km blocks |
+|---|---|---|---|---|---|---|
+| distance to the fault lines * (positive control) | 1.000 | 0.509-0.559 | +0.441 | 1.000 (0.045) | +0.487 | +0.479 |
+| slip/dilation tendency gradient * | 0.875 | 0.495-0.522 | +0.353 | 0.179 (0.024) | +0.395 | +0.391 |
+| slip/dilation tendency * | 0.529 | 0.479-0.506 | +0.008 | 0.044 (0.015) | +0.073 | +0.061 |
+| best gravity layer (`grv_dmx`) | 0.567 | 0.493-0.520 | +0.046 | 0.023 (0.013) | +0.041 | +0.049 |
+| six gravity-gradient layers | 0.552-0.567 | 0.485-0.520 | +0.041 to +0.046 | 0.023-0.032 | +0.032 to +0.042 | +0.045 to +0.056 |
+| `grv_con` | 0.556 | 0.514-0.525 | +0.031 | 0.012 (0.017) | +0.000 | +0.026 |
+| distance to gravity stations | 0.547 | 0.506-0.524 | +0.023 | 0.053 (0.046) | +0.020 | +0.023 |
+| distance to gravity lineations | 0.518 | 0.499-0.515 | +0.002 | 0.043 (0.040) | +0.006 | +0.005 |
+| ten pseudo-gravity (magnetic) layers | 0.466-0.531 | | -0.010 to +0.000 | | -0.009 to +0.001 | -0.013 to +0.002 |
+| heat flow, its uncertainty, their gradients | 0.471-0.512 | | -0.015 to -0.001 | | -0.011 to +0.000 | -0.013 to +0.002 |
+| distance to magnetic lineations | 0.528 | 0.513-0.529 | -0.001 | 0.048 (0.043) | +0.006 | +0.002 |
 
 - **Only the gravity-gradient family carries a signal, and it is weak**
   (AUC about 0.56 against a shifted 0.49-0.52). Its top cells drawn as a map
   score GEMS 0.03, against 0.80 for a re-issue of the fault database.
-- **The lineations lose that signal.** The gradient grid scores 0.557; the
+- **That signal is local.** It keeps nearly all its edge when each
+  near-fault cell is compared only with cells of its own 10 km block, so it
+  is not just faulted districts having steeper gravity overall. One gravity
+  layer, `grv_con`, does lose its edge within blocks: its pooled skill was
+  regional. The slip and dilation tendency control goes the other way
+  (+0.008 pooled, +0.073 within blocks), so the blocks reveal as well as
+  remove.
+- **The lineations lose the signal.** The gradient grid scores 0.557; the
   distance to the lineations traced along its crests scores 0.518, no better
-  than chance.
+  than chance, pooled or within blocks.
 - **No magnetic, heat-flow or point layer beats chance** against young
-  mapped faults.
+  mapped faults, pooled or within blocks.
 - **Caution on survey density:** distance to the gravity stations scores
-  above chance, so surveyed ground lies a little closer to mapped faults. A
-  model may learn where people surveyed rather than the geology.
+  above chance, within blocks too, so surveyed ground lies a little closer
+  to mapped faults. A model may learn where people surveyed rather than the
+  geology.
 - In the Basin and Range, young faults often bound the ranges, so a steeper
   gravity gradient there may reflect the range-basin contrast as much as the
-  fault. The within-block run (10 km and 25 km) is queued to test this.
+  fault. A range front and its fault fall inside the same 10 km block, so
+  the within-block run does not settle this.
 
 For entrants: gravity-gradient grids are worth trying as extra features
 (`gems_regrid.py grid ... --assume-utm11`), with a small gain expected at
-best. The other layers showed no skill against young faults; their value
-for buried faults, which GEMS is after, is untested.
+best; since the signal holds within blocks, it should survive spatial block
+cross-validation. The other layers showed no skill against young faults;
+their value for buried faults, which GEMS is after, is untested.
 
 ## What the organisers have said on the forum
 
@@ -446,6 +459,9 @@ question for the public leaderboard.
   Repository submissions 1350-1353, CC BY 4.0) publishes structural-setting
   centroids as points and a distance-to-centroid GeoTIFF in UTM 11N, which
   `gems_regrid.py` reads as they are.
+- Splitting the young faults into range-bounding and intrabasin ones (for
+  example by the slope on either side in a public DEM) would test whether
+  the gravity-gradient signal follows the faults or the range fronts.
 - **Distance to the known faults is not a training feature here on purpose.**
   The training labels are the known faults, so a distance-to-label feature
   would be leakage: it predicts the label perfectly in training and says

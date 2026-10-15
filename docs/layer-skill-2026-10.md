@@ -1,7 +1,9 @@
-# Which public layers single out cells near mapped Quaternary faults (14 October 2026)
+# Which public layers single out cells near mapped Quaternary faults (14-15 October 2026)
 
 By MV2 of Munim, Inc., made with AI agents. Text and numbers CC BY 4.0;
-code Apache-2.0. Raw numbers: [`layer-skill-2026-10.json`](layer-skill-2026-10.json).
+code Apache-2.0. Raw numbers: [`layer-skill-2026-10.json`](layer-skill-2026-10.json)
+(pooled run) and [`layer-skill-blocks-2026-10.json`](layer-skill-blocks-2026-10.json)
+(within-block run).
 
 ## Question
 
@@ -122,6 +124,75 @@ magnetic lineation is 1.01 to 1.10 times that of the shifted lineations.
 There is no offset (for example, crests a kilometre basinward of the
 surface trace) at which the two line up.
 
+## Within blocks (15 October 2026)
+
+A pooled AUC can be won by a layer that is merely high over the faulted
+part of the region. To separate that from a layer that follows the faults,
+the same run was repeated with `--block-km 10 --block-km 25`: each
+near-fault cell is compared only with the other cells of its own square
+block (10 km or 25 km, tiled from the grid's top-left corner), and the pairs
+of all blocks are pooled. 976 blocks of 10 km and 197 of 25 km hold both
+near-fault and other cells. The chance range is the same five shifted
+near-fault maps, scored the same way. Run: 4 CPU cores, 558 s
+(`gems_gridskill.py` 0.8.0, `--no-gems`); the pooled columns reproduce the
+14 October run exactly.
+
+| feature | pooled AUC (edge) | within 10 km (chance) | edge | within 25 km (chance) | edge |
+|---|---|---|---|---|---|
+| tdts_nvml_grad * | 0.875 (+0.353) | 0.906 (0.493-0.510) | +0.395 | 0.907 (0.484-0.516) | +0.391 |
+| tdts_nvml * | 0.529 (+0.008) | 0.584 (0.494-0.511) | **+0.073** | 0.569 (0.498-0.508) | **+0.061** |
+| grv_dmx | 0.567 (+0.046) | 0.546 (0.495-0.503) | +0.041 | 0.562 (0.487-0.505) | +0.049 |
+| grv_grad | 0.557 (+0.043) | 0.549 (0.493-0.502) | +0.042 | 0.561 (0.493-0.502) | +0.054 |
+| grv_filt_grad | 0.557 (+0.043) | 0.549 (0.493-0.502) | +0.042 | 0.562 (0.493-0.502) | +0.056 |
+| grv_filthg | 0.557 (+0.043) | 0.549 (0.493-0.502) | +0.042 | 0.562 (0.493-0.502) | +0.056 |
+| grv_filthg_grad | 0.559 (+0.042) | 0.538 (0.494-0.501) | +0.032 | 0.555 (0.493-0.507) | +0.048 |
+| grv_dmx_grad | 0.552 (+0.041) | 0.540 (0.493-0.504) | +0.033 | 0.554 (0.491-0.502) | +0.045 |
+| grv_con | 0.556 (+0.031) | 0.518 (0.496-0.518) | **+0.000** | 0.539 (0.497-0.513) | +0.026 |
+| grv_con_grad | 0.535 (+0.016) | 0.510 (0.499-0.505) | +0.004 | 0.522 (0.500-0.508) | +0.015 |
+| dist_gravityStations_nvML | 0.547 (+0.023) | 0.529 (0.492-0.509) | +0.020 | 0.538 (0.496-0.515) | +0.023 |
+| dist_gravityLineations_nvML | 0.518 (+0.002) | 0.512 (0.494-0.506) | +0.006 | 0.512 (0.493-0.506) | +0.005 |
+| dist_magneticLineations_nvML | 0.528 (-0.001) | 0.514 (0.495-0.508) | +0.006 | 0.513 (0.495-0.511) | +0.002 |
+| grv | 0.470 (-0.010) | 0.517 (0.492-0.511) | +0.006 | 0.503 (0.489-0.517) | -0.013 |
+| hfnvml_est | 0.471 (-0.001) | 0.495 (0.497-0.515) | -0.010 | 0.501 (0.497-0.514) | -0.013 |
+
+Every feature's row is in [`layer-skill-blocks-2026-10.json`](layer-skill-blocks-2026-10.json).
+The rows not shown: the ten `psg*` features have within-block edges from
+-0.009 to +0.001 (10 km) and -0.013 to +0.002 (25 km); heat flow, its
+uncertainty and their gradients from -0.011 to +0.000 and -0.013 to +0.002;
+the other point-distance layers from -0.010 to +0.009 and -0.012 to +0.007
+(the +0.009 is `dist_gravityMaxSpots_all_nvML` pointing the other way: AUC
+0.484, cells near faults lie slightly *farther* from gravity max spots).
+
+What the blocks add:
+
+1. **The gravity-gradient signal is local, not regional.** Within 10 km
+   squares the six gradient layers keep an AUC of 0.538 to 0.549 against a
+   within-block chance of 0.493 to 0.504 (edge +0.032 to +0.042, against
+   +0.041 to +0.046 pooled); within 25 km squares the edge is +0.045 to
+   +0.056. Inside a 10 km square, the cells within 300 m of a young fault
+   sit on steeper gravity gradients than the other cells of the same square.
+   It is still weak: an AUC of 0.55 is far from a map.
+2. **One gravity layer's signal was regional.** `grv_con` loses its whole
+   edge within 10 km (+0.000) and keeps about 0.026 within 25 km. Its pooled
+   AUC came from faulted districts being high on it, not from the faults.
+3. **The block test can also reveal a signal.** The slip and dilation
+   tendency grid `tdts_nvml` (a positive control computed from the faults)
+   scores barely above chance pooled (+0.008) but +0.073 within 10 km
+   blocks: its regional swings hid a local signal. So the blocks do not
+   simply shrink every AUC towards 0.5.
+4. **The survey caution stands locally.** Distance to gravity stations keeps
+   an edge of +0.020 within 10 km: even inside a block, surveyed cells lie
+   a little closer to mapped young faults.
+5. **Nothing else appears.** The lineations, the magnetic grids, heat flow
+   and the point layers stay within chance inside blocks as well.
+
+What the blocks do not settle: a range-front fault and the density step
+between range and basin lie within the same 10 km block, often within the
+same few hundred metres. So "steeper gravity gradient near young faults"
+may still be the range-basin contrast that the fault itself created. Telling
+the two apart needs faults split by setting (range-bounding against
+intrabasin), which this release does not label.
+
 ## Limits
 
 - The target is the release's map of **Quaternary** (young, surface-mapped)
@@ -132,20 +203,21 @@ surface trace) at which the two line up.
   10.8 million cells.
 - In the Basin and Range, young faults often bound the ranges, where dense
   bedrock meets basin fill, so a steeper gravity gradient there may reflect
-  the range-basin contrast as much as the fault. A follow-up run scores the
-  AUC within 10 km and 25 km blocks only (`--block-km`, new in 0.8.0) to
-  test whether the gravity signal follows the faults within a block or only
-  the faulted part of the region. Even then, where a range front *is* the
-  fault, the two cannot be told apart.
+  the range-basin contrast as much as the fault. The within-block run above
+  rules out the purely regional reading but not this one.
+- Blocks are one fixed tiling; a block cut through a fault zone splits its
+  cells between two blocks.
 - The 250 m grids are interpolated onto 100 m cells, which smooths them.
 
 ## Practical advice for GEMS entrants
 
 - Gravity-gradient grids are worth trying as extra features
   (`gems_regrid.py grid ... --assume-utm11`); expect a small gain at best.
+  Because their signal holds within 10 km blocks, it should survive a
+  spatial block cross-validation rather than vanish there.
 - The pseudo-gravity, heat-flow, point and lineation layers showed no
-  location skill against young faults here. Their value for buried faults,
-  which the GEMS Prize is really after, is untested.
+  location skill against young faults here, pooled or within blocks. Their
+  value for buried faults, which the GEMS Prize is really after, is untested.
 - Check whether survey-density features (distance to stations or wells)
   help on held-out ground before trusting them.
 
@@ -154,4 +226,5 @@ surface trace) at which the two line up.
 ```
 pip install numpy scipy
 python gems_gridskill.py run --data-dir data --out-dir gridskill --download
+python gems_gridskill.py run --data-dir data --out-dir gridskill_blocks --no-gems --block-km 10 --block-km 25
 ```
